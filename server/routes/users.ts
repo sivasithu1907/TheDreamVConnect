@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { users } from '../db/schema.js';
-import { eq, and, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { requireAuth, requireRole, AuthRequest, ADMIN_ROLES } from '../middleware/auth.js';
 import { writeAuditLog } from '../lib/audit.js';
 
@@ -32,7 +32,7 @@ router.get('/', requireRole(ADMIN_ROLES.concat(['sales_manager'])), async (req: 
       id: users.id, email: users.email, name: users.name,
       role: users.role, clientId: users.clientId, status: users.status,
       lastLoginAt: users.lastLoginAt, createdAt: users.createdAt,
-    }).from(users).where(isNull(users.deletedAt ?? undefined));
+    }).from(users);
     res.json(all);
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
