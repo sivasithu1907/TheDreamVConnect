@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { createServer as createViteServer } from 'vite';
 
 import authRouter            from './routes/auth.js';
 import usersRouter           from './routes/users.js';
@@ -14,7 +12,11 @@ import shipmentsRouter       from './routes/shipments.js';
 import portalRouter          from './routes/portal.js';
 import { dashboardRouter, auditRouter } from './routes/dashboard.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// NOTE: esbuild compiles this file to CommonJS for the production bundle
+// (see package.json "build" script), where __dirname is a native global.
+// We avoid import.meta.url here since it is undefined under CJS output.
+declare const __dirname: string;
+
 const PORT = parseInt(process.env.PORT || '3001');
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -48,6 +50,7 @@ async function startServer() {
 
   // ── Frontend ────────────────────────────────────────────────────────────────
   if (isDev) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
     app.use(vite.middlewares);
   } else {
