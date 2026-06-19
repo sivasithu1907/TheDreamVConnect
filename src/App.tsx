@@ -9,7 +9,8 @@ import Brands from './pages/admin/Brands';
 import Inventory from './pages/admin/Inventory';
 import Shipments from './pages/admin/Shipments';
 import Clients from './pages/admin/Clients';
-import Users from './pages/admin/Users';
+import SystemUsers from './pages/admin/SystemUsers';
+import ClientUsers from './pages/admin/ClientUsers';
 import AuditLogs from './pages/admin/AuditLogs';
 import PortalDashboard from './pages/portal/PortalDashboard';
 import AvailableStock from './pages/portal/AvailableStock';
@@ -42,7 +43,8 @@ export default function App() {
         <Route path="inventory"  element={<ProtectedRoute roles={INTERNAL}><Inventory /></ProtectedRoute>} />
         <Route path="shipments"  element={<ProtectedRoute roles={INTERNAL}><Shipments /></ProtectedRoute>} />
         <Route path="clients"    element={<ProtectedRoute roles={[...ADMIN, 'sales_manager']}><Clients /></ProtectedRoute>} />
-        <Route path="users"      element={<ProtectedRoute roles={ADMIN}><Users /></ProtectedRoute>} />
+        <Route path="users/system"  element={<ProtectedRoute roles={ADMIN}><SystemUsers /></ProtectedRoute>} />
+        <Route path="users/clients" element={<ProtectedRoute roles={ADMIN}><ClientUsers /></ProtectedRoute>} />
         <Route path="audit-logs" element={<ProtectedRoute roles={ADMIN}><AuditLogs /></ProtectedRoute>} />
 
         {/* Client Portal routes */}
