@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Folders, Tags, Warehouse,
-  Truck, Users, Settings, LogOut, FileText, Building2,
-  ShoppingBag, BarChart3, Menu, X, ChevronRight
+  Truck, Users, LogOut, FileText, Building2, UserCog,
+  ShoppingBag, Menu, X, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
@@ -15,21 +15,55 @@ interface NavItem {
   roles: string[];
 }
 
-const NAV_ITEMS: NavItem[] = [
-  // Internal
-  { name: 'Dashboard',       path: '/dashboard',  icon: LayoutDashboard, roles: ['super_admin','inventory_manager','sales_manager','operations_executive'] },
-  { name: 'Products',        path: '/products',   icon: Package,         roles: ['super_admin','inventory_manager','operations_executive'] },
-  { name: 'Categories',      path: '/categories', icon: Folders,         roles: ['super_admin'] },
-  { name: 'Brands',          path: '/brands',     icon: Tags,            roles: ['super_admin'] },
-  { name: 'Inventory',       path: '/inventory',  icon: Warehouse,       roles: ['super_admin','inventory_manager','operations_executive'] },
-  { name: 'Shipments',       path: '/shipments',  icon: Truck,           roles: ['super_admin','inventory_manager','operations_executive'] },
-  { name: 'Clients',         path: '/clients',    icon: Building2,       roles: ['super_admin','sales_manager'] },
-  { name: 'Users',           path: '/users',      icon: Users,           roles: ['super_admin'] },
-  { name: 'Audit Logs',      path: '/audit-logs', icon: FileText,        roles: ['super_admin'] },
-  // Client Portal
-  { name: 'Dashboard',       path: '/portal',           icon: LayoutDashboard, roles: ['client_admin','client_purchasing_officer','client_viewer'] },
-  { name: 'Available Stock', path: '/portal/stock',     icon: ShoppingBag,     roles: ['client_admin','client_purchasing_officer','client_viewer'] },
-  { name: 'Incoming Stock',  path: '/portal/shipments', icon: Truck,           roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Overview',
+    items: [
+      { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['super_admin','inventory_manager','sales_manager','operations_executive'] },
+    ],
+  },
+  {
+    label: 'Catalog',
+    items: [
+      { name: 'Products',   path: '/products',   icon: Package, roles: ['super_admin','inventory_manager','operations_executive'] },
+      { name: 'Categories', path: '/categories',  icon: Folders, roles: ['super_admin'] },
+      { name: 'Brands',     path: '/brands',      icon: Tags,    roles: ['super_admin'] },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { name: 'Inventory', path: '/inventory', icon: Warehouse, roles: ['super_admin','inventory_manager','operations_executive'] },
+      { name: 'Shipments', path: '/shipments', icon: Truck,     roles: ['super_admin','inventory_manager','operations_executive'] },
+    ],
+  },
+  {
+    label: 'People',
+    items: [
+      { name: 'Clients',       path: '/clients',       icon: Building2, roles: ['super_admin','sales_manager'] },
+      { name: 'System Users',  path: '/users/system',  icon: UserCog,   roles: ['super_admin'] },
+      { name: 'Client Users',  path: '/users/clients', icon: Users,     roles: ['super_admin'] },
+    ],
+  },
+  {
+    label: 'System',
+    items: [
+      { name: 'Audit Logs', path: '/audit-logs', icon: FileText, roles: ['super_admin'] },
+    ],
+  },
+  {
+    label: 'Portal',
+    items: [
+      { name: 'Dashboard',        path: '/portal',           icon: LayoutDashboard, roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+      { name: 'Available Stock',  path: '/portal/stock',     icon: ShoppingBag,     roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+      { name: 'Incoming Stock',   path: '/portal/shipments', icon: Truck,           roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+    ],
+  },
 ];
 
 export function Layout() {
@@ -38,7 +72,12 @@ export function Layout() {
   const navigate  = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navItems = NAV_ITEMS.filter(item => user && item.roles.includes(user.role));
+  const visibleGroups = NAV_GROUPS
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => user && item.roles.includes(user.role)),
+    }))
+    .filter(group => group.items.length > 0);
 
   const handleLogout = () => { logout(); navigate('/login'); };
 
@@ -59,28 +98,35 @@ export function Layout() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(item => {
-          const Icon = item.icon;
-          const active = isActive(item.path);
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                active
-                  ? 'nav-active text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              )}
-            >
-              <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-blue-400' : 'text-slate-500')} />
-              {item.name}
-              {active && <ChevronRight className="ml-auto h-3 w-3 text-blue-400" />}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+        {visibleGroups.map(group => (
+          <div key={group.label}>
+            <p className="px-3 mb-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{group.label}</p>
+            <div className="space-y-0.5">
+              {group.items.map(item => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                      active
+                        ? 'nav-active text-white'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    )}
+                  >
+                    <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-blue-400' : 'text-slate-500')} />
+                    {item.name}
+                    {active && <ChevronRight className="ml-auto h-3 w-3 text-blue-400" />}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* User */}
