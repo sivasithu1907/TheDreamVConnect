@@ -8,6 +8,13 @@
       "when": 1781891605432,
       "tag": "0000_lazy_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781937379168,
+      "tag": "0001_burly_terror",
+      "breakpoints": true
     }
   ]
 }
