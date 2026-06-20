@@ -23,6 +23,7 @@ const updateUserSchema = z.object({
   role:     z.enum(['super_admin','inventory_manager','sales_manager','operations_executive','client_admin','client_purchasing_officer','client_viewer']).optional(),
   clientId: z.number().int().optional().nullable(),
   status:   z.enum(['active','inactive']).optional(),
+  password: z.string().min(8).optional(),
 });
 
 // GET /api/users
@@ -69,12 +70,18 @@ router.put('/:id', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
   if (!parsed.success) { res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() }); return; }
 
   try {
+    const { password, ...rest } = parsed.data;
+    const updateValues: Record<string, unknown> = { ...rest, updatedAt: new Date() };
+    if (password) {
+      updateValues.passwordHash = await bcrypt.hash(password, 12);
+    }
+
     const [updated] = await db.update(users)
-      .set({ ...parsed.data, updatedAt: new Date() })
+      .set(updateValues)
       .where(eq(users.id, id))
       .returning({ id: users.id, email: users.email, name: users.name, role: users.role, status: users.status });
     if (!updated) { res.status(404).json({ error: 'User not found' }); return; }
-    await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'UPDATE', resource: 'user', resourceId: id, details: parsed.data });
+    await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: password ? 'UPDATE_PASSWORD' : 'UPDATE', resource: 'user', resourceId: id, details: rest });
     res.json(updated);
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
