@@ -66,7 +66,7 @@ export default function Brands() {
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
-          <div className="relative z-10 glass-card w-full max-w-md p-6">
+          <div className="relative z-10 glass-card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white">{modal === 'create' ? 'Add Brand' : 'Edit Brand'}</h2>
               <button onClick={() => setModal(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
