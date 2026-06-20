@@ -10,7 +10,7 @@ interface User {
 
 const SYSTEM_ROLES = ['super_admin','inventory_manager','sales_manager','operations_executive'] as const;
 const createEmpty = { email:'', password:'', name:'', role:'inventory_manager' as string };
-const editEmpty   = { name:'', role:'inventory_manager' as string, status:'active' as string };
+const editEmpty   = { name:'', role:'inventory_manager' as string, status:'active' as string, password:'' };
 
 export default function SystemUsers() {
   const { get, post, put } = useApi();
@@ -33,7 +33,7 @@ export default function SystemUsers() {
   useEffect(load, []);
 
   const openCreate = () => { setCreateForm(createEmpty); setError(null); setModal('create'); };
-  const openEdit = (u: User) => { setEditForm({ name: u.name, role: u.role, status: u.status }); setEditing(u); setError(null); setModal('edit'); };
+  const openEdit = (u: User) => { setEditForm({ name: u.name, role: u.role, status: u.status, password: '' }); setEditing(u); setError(null); setModal('edit'); };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setError(null);
@@ -48,7 +48,10 @@ export default function SystemUsers() {
     e.preventDefault(); if (!editing) return;
     setSaving(true); setError(null);
     try {
-      await put(`/api/users/${editing.id}`, editForm);
+      const { password, ...rest } = editForm;
+      const payload: Record<string, unknown> = { ...rest };
+      if (password) payload.password = password;
+      await put(`/api/users/${editing.id}`, payload);
       setModal(null); load();
     } catch (err: unknown) { setError(err instanceof Error ? err.message : 'Failed'); }
     finally { setSaving(false); }
@@ -94,7 +97,7 @@ export default function SystemUsers() {
       {modal === 'create' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
-          <div className="relative z-10 glass-card w-full max-w-md p-6">
+          <div className="relative z-10 glass-card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white">Add System User</h2>
               <button onClick={() => setModal(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
@@ -122,7 +125,7 @@ export default function SystemUsers() {
       {modal === 'edit' && editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
-          <div className="relative z-10 glass-card w-full max-w-md p-6">
+          <div className="relative z-10 glass-card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-white">Edit User</h2>
               <button onClick={() => setModal(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
@@ -141,6 +144,11 @@ export default function SystemUsers() {
                   <option value="active" className="bg-slate-800">Active</option>
                   <option value="inactive" className="bg-slate-800">Inactive</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Reset Password</label>
+                <input type="password" minLength={8} value={editForm.password} onChange={e => setEditForm(f => ({...f, password: e.target.value}))} placeholder="Leave blank to keep current password" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                <p className="text-xs text-slate-500 mt-1">Min 8 characters. Only fill this in if you want to change it.</p>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-white/10 rounded-lg">Cancel</button>
