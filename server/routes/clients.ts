@@ -58,6 +58,10 @@ router.post('/', requireRole(ADMIN_ROLES.concat(['sales_manager'])), async (req:
     await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'CREATE', resource: 'client', resourceId: client.id, details: { companyName: client.companyName } });
     res.status(201).json(client);
   } catch (err: unknown) {
+    if (err instanceof Error && /unique/i.test(err.message) && /phone/i.test(err.message)) {
+      res.status(409).json({ error: 'A client with this phone number already exists' });
+      return;
+    }
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
   }
 });
@@ -72,6 +76,28 @@ router.put('/:id', requireRole(ADMIN_ROLES.concat(['sales_manager'])), async (re
     if (!updated) { res.status(404).json({ error: 'Client not found' }); return; }
     await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'UPDATE', resource: 'client', resourceId: id, details: parsed.data });
     res.json(updated);
+  } catch (err: unknown) {
+    if (err instanceof Error && /unique/i.test(err.message) && /phone/i.test(err.message)) {
+      res.status(409).json({ error: 'A client with this phone number already exists' });
+      return;
+    }
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
+  }
+});
+
+// PUT /api/clients/:id/categories — replace full set of allowed categories (bulk)
+router.put('/:id/categories', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
+  const clientId = parseInt(req.params.id);
+  const { categoryIds } = z.object({ categoryIds: z.array(z.number().int()) }).parse(req.body);
+  try {
+    await db.delete(clientCategories).where(eq(clientCategories.clientId, clientId));
+    if (categoryIds.length) {
+      await db.insert(clientCategories).values(
+        categoryIds.map(categoryId => ({ clientId, categoryId, grantedBy: req.user!.id }))
+      );
+    }
+    await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'SET_CATEGORIES', resource: 'client', resourceId: clientId, details: { categoryIds } });
+    res.json({ success: true, categoryIds });
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
   }
