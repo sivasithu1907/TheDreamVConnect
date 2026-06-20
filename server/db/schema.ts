@@ -56,7 +56,7 @@ export const clients = pgTable('clients', {
   companyName:    text('company_name').notNull(),
   contactPerson:  text('contact_person').notNull(),
   email:          text('email').notNull(),
-  phone:          text('phone'),
+  phone:          text('phone').unique(),
   address:        text('address'),
   taxNumber:      text('tax_number'),
   creditLimit:    decimal('credit_limit', { precision: 12, scale: 2 }),
