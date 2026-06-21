@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Pencil, Building2, Check, Users as UsersIcon, X } from 'lucide-react';
 import { Modal } from '../../components/Modal';
 import { useApi } from '../../hooks/useApi';
+import { PAYMENT_TERMS_OPTIONS } from '../../lib/utils';
 
 interface Client {
   id: number; companyName: string; contactPerson: string; email: string;
@@ -24,6 +25,7 @@ export default function Clients() {
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState<string|null>(null);
   const [justCreated, setJustCreated] = useState<Client|null>(null);
+  const [isCustomTerms, setIsCustomTerms] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -34,10 +36,11 @@ export default function Clients() {
   };
   useEffect(load, []);
 
-  const openCreate = () => { setForm(empty); setEditing(null); setSelectedCategoryIds([]); setError(null); setModal('create'); };
+  const openCreate = () => { setForm(empty); setEditing(null); setSelectedCategoryIds([]); setError(null); setIsCustomTerms(false); setModal('create'); };
 
   const openEdit = async (c: Client) => {
     setForm({ companyName: c.companyName, contactPerson: c.contactPerson, email: c.email, phone: c.phone??'', address:'', taxNumber:'', paymentTerms: c.paymentTerms??'', notes:'' });
+    setIsCustomTerms(!!c.paymentTerms && !PAYMENT_TERMS_OPTIONS.includes(c.paymentTerms));
     setEditing(c); setError(null); setModal('edit');
     try {
       const full = await get<{ allowedCategories: { categoryId: number }[] }>(`/api/clients/${c.id}`);
@@ -146,7 +149,7 @@ export default function Clients() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-slate-400 mb-1">Mobile Number *</label>
-              <input required value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} placeholder="Must be unique" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <input required value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-xs text-slate-400 mb-1">Email *</label>
@@ -156,7 +159,19 @@ export default function Clients() {
           <div><label className="block text-xs text-slate-400 mb-1">Address</label><input value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="block text-xs text-slate-400 mb-1">Tax Number</label><input value={form.taxNumber} onChange={e => setForm(f => ({...f, taxNumber: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
-            <div><label className="block text-xs text-slate-400 mb-1">Payment Terms</label><input value={form.paymentTerms} onChange={e => setForm(f => ({...f, paymentTerms: e.target.value}))} placeholder="e.g. Net 30" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+            <div><label className="block text-xs text-slate-400 mb-1">Payment Terms</label>
+              {isCustomTerms ? (
+                <div className="flex gap-1.5">
+                  <input autoFocus value={form.paymentTerms} onChange={e => setForm(f => ({...f, paymentTerms: e.target.value}))} placeholder="Custom terms" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <button type="button" onClick={() => { setIsCustomTerms(false); setForm(f => ({...f, paymentTerms: ''})); }} className="px-2 text-xs text-slate-400 hover:text-white border border-white/10 rounded-lg shrink-0">List</button>
+                </div>
+              ) : (
+                <select value={form.paymentTerms} onChange={e => { if (e.target.value === 'Custom') { setIsCustomTerms(true); setForm(f => ({...f, paymentTerms: ''})); } else { setForm(f => ({...f, paymentTerms: e.target.value})); } }} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  <option value="" className="bg-slate-800">— Select —</option>
+                  {PAYMENT_TERMS_OPTIONS.map(t => <option key={t} value={t} className="bg-slate-800">{t}</option>)}
+                </select>
+              )}
+            </div>
           </div>
           <div><label className="block text-xs text-slate-400 mb-1">Notes</label><textarea rows={2} value={form.notes} onChange={e => setForm(f => ({...f, notes: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" /></div>
 
