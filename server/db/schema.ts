@@ -42,6 +42,7 @@ export const users = pgTable('users', {
   email:         text('email').notNull().unique(),
   passwordHash:  text('password_hash').notNull(),
   name:          text('name').notNull(),
+  jobTitle:      text('job_title'),                // e.g. "Procurement Manager" — relevant for client users
   role:          userRoleEnum('role').default('client_viewer').notNull(),
   clientId:      integer('client_id').references(() => clients.id, { onDelete: 'set null' }),
   status:        statusEnum('status').default('active').notNull(),
@@ -174,22 +175,48 @@ export const shipmentItems = pgTable('shipment_items', {
   receivedQty: integer('received_qty').default(0).notNull(),
 });
 
-// ─── Reservations ─────────────────────────────────────────────────────────────
+// ─── Reservations / Special Requests ──────────────────────────────────────────
+// A single table covers two related client actions:
+//  1. "Reserve stock" — clientId + productId + quantity against a known catalog item.
+//  2. "Special request" — productId is null; client describes what they need in
+//     freeText, optionally with photo attachments (see requestAttachments below).
+// requestType distinguishes the two. syncStatus/externalRef/externalSystem exist
+// so that a future integration (Odoo sale.order, etc.) has somewhere to record
+// "this was pushed externally and here's its ID there" without a schema change.
+
+export const requestTypeEnum = pgEnum('request_type', ['stock_reservation', 'special_request']);
+export const syncStatusEnum  = pgEnum('sync_status', ['not_synced', 'synced', 'sync_failed']);
 
 export const reservations = pgTable('reservations', {
-  id:          serial('id').primaryKey(),
-  clientId:    integer('client_id').references(() => clients.id).notNull(),
-  productId:   integer('product_id').references(() => products.id).notNull(),
-  warehouseId: integer('warehouse_id').references(() => warehouses.id).notNull(),
-  quantity:    integer('quantity').notNull(),
-  status:      reservationStatusEnum('status').default('pending').notNull(),
-  notes:       text('notes'),
-  requestedBy: integer('requested_by').references(() => users.id).notNull(),
-  reviewedBy:  integer('reviewed_by').references(() => users.id),
-  reviewNotes: text('review_notes'),
-  expiresAt:   timestamp('expires_at'),
-  createdAt:   timestamp('created_at').defaultNow().notNull(),
-  updatedAt:   timestamp('updated_at').defaultNow().notNull(),
+  id:            serial('id').primaryKey(),
+  clientId:      integer('client_id').references(() => clients.id).notNull(),
+  requestType:   requestTypeEnum('request_type').default('stock_reservation').notNull(),
+  productId:     integer('product_id').references(() => products.id),       // null for special_request
+  warehouseId:   integer('warehouse_id').references(() => warehouses.id),    // null for special_request
+  quantity:      integer('quantity'),                                       // null for special_request
+  freeText:      text('free_text'),                                        // description for special_request
+  status:        reservationStatusEnum('status').default('pending').notNull(),
+  notes:         text('notes'),
+  requestedBy:   integer('requested_by').references(() => users.id).notNull(),
+  reviewedBy:    integer('reviewed_by').references(() => users.id),
+  reviewNotes:   text('review_notes'),
+  expiresAt:     timestamp('expires_at'),
+  syncStatus:    syncStatusEnum('sync_status').default('not_synced').notNull(),
+  externalSystem: text('external_system'),    // e.g. 'odoo', 'quickbooks' — set once an integration exists
+  externalRef:    text('external_ref'),       // e.g. Odoo sale.order id/name
+  createdAt:     timestamp('created_at').defaultNow().notNull(),
+  updatedAt:     timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Photo attachments for special requests (e.g. "I need something that looks like this")
+export const requestAttachments = pgTable('request_attachments', {
+  id:            serial('id').primaryKey(),
+  reservationId: integer('reservation_id').references(() => reservations.id, { onDelete: 'cascade' }).notNull(),
+  fileName:      text('file_name').notNull(),
+  fileUrl:       text('file_url').notNull(),     // served from our own storage (see server static route)
+  mimeType:      text('mime_type'),
+  fileSize:      integer('file_size'),
+  uploadedAt:    timestamp('uploaded_at').defaultNow().notNull(),
 });
 
 // ─── Purchase Orders ──────────────────────────────────────────────────────────
@@ -288,11 +315,16 @@ export const incomingShipmentsRelations = relations(incomingShipments, ({ many }
   items: many(shipmentItems),
 }));
 
-export const reservationsRelations = relations(reservations, ({ one }) => ({
-  client:    one(clients,    { fields: [reservations.clientId],   references: [clients.id] }),
-  product:   one(products,   { fields: [reservations.productId],  references: [products.id] }),
-  warehouse: one(warehouses, { fields: [reservations.warehouseId],references: [warehouses.id] }),
-  requester: one(users,      { fields: [reservations.requestedBy],references: [users.id] }),
+export const reservationsRelations = relations(reservations, ({ one, many }) => ({
+  client:      one(clients,    { fields: [reservations.clientId],   references: [clients.id] }),
+  product:     one(products,   { fields: [reservations.productId],  references: [products.id] }),
+  warehouse:   one(warehouses, { fields: [reservations.warehouseId],references: [warehouses.id] }),
+  requester:   one(users,      { fields: [reservations.requestedBy],references: [users.id] }),
+  attachments: many(requestAttachments),
+}));
+
+export const requestAttachmentsRelations = relations(requestAttachments, ({ one }) => ({
+  reservation: one(reservations, { fields: [requestAttachments.reservationId], references: [reservations.id] }),
 }));
 
 export const purchaseOrdersRelations = relations(purchaseOrders, ({ one, many }) => ({
