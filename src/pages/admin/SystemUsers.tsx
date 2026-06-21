@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Plus, Users as UsersIcon, X, Check, Pencil } from 'lucide-react';
+import { Plus, Users as UsersIcon, Check, Pencil } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { ROLE_LABELS, formatDateTime } from '../../lib/utils';
+import { Modal } from '../../components/Modal';
 
 interface User {
   id: number; email: string; name: string; role: string;
@@ -94,42 +95,28 @@ export default function SystemUsers() {
       </div>
 
       {/* Create modal */}
-      {modal === 'create' && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 py-8">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
-          <div className="relative z-10 glass-card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white">Add System User</h2>
-              <button onClick={() => setModal(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
-            </div>
-            {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg">{error}</p>}
-            <form onSubmit={handleCreate} className="space-y-4">
-              <div><label className="block text-xs text-slate-400 mb-1">Full Name *</label><input required value={createForm.name} onChange={e => setCreateForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
-              <div><label className="block text-xs text-slate-400 mb-1">Email *</label><input required type="email" value={createForm.email} onChange={e => setCreateForm(f => ({...f, email: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
-              <div><label className="block text-xs text-slate-400 mb-1">Initial Password * (min 8 chars)</label><input required type="password" minLength={8} value={createForm.password} onChange={e => setCreateForm(f => ({...f, password: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
-              <div><label className="block text-xs text-slate-400 mb-1">Role *</label>
-                <select value={createForm.role} onChange={e => setCreateForm(f => ({...f, role: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                  {SYSTEM_ROLES.map(r => <option key={r} value={r} className="bg-slate-800">{ROLE_LABELS[r]}</option>)}
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-white/10 rounded-lg">Cancel</button>
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50">{saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />} Create User</button>
-              </div>
-            </form>
+      <Modal open={modal === 'create'} onClose={() => setModal(null)} title="Add System User">
+        {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg">{error}</p>}
+        <form onSubmit={handleCreate} className="space-y-4">
+          <div><label className="block text-xs text-slate-400 mb-1">Full Name *</label><input required value={createForm.name} onChange={e => setCreateForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+          <div><label className="block text-xs text-slate-400 mb-1">Email *</label><input required type="email" value={createForm.email} onChange={e => setCreateForm(f => ({...f, email: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+          <div><label className="block text-xs text-slate-400 mb-1">Initial Password * (min 8 chars)</label><input required type="password" minLength={8} value={createForm.password} onChange={e => setCreateForm(f => ({...f, password: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+          <div><label className="block text-xs text-slate-400 mb-1">Role *</label>
+            <select value={createForm.role} onChange={e => setCreateForm(f => ({...f, role: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+              {SYSTEM_ROLES.map(r => <option key={r} value={r} className="bg-slate-800">{ROLE_LABELS[r]}</option>)}
+            </select>
           </div>
-        </div>
-      )}
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-white/10 rounded-lg">Cancel</button>
+            <button type="submit" disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50">{saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />} Create User</button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Edit modal */}
-      {modal === 'edit' && editing && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 py-8">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
-          <div className="relative z-10 glass-card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white">Edit User</h2>
-              <button onClick={() => setModal(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
-            </div>
+      <Modal open={modal === 'edit' && !!editing} onClose={() => setModal(null)} title="Edit User">
+        {editing && (
+          <>
             <p className="text-xs text-slate-500 mb-4">{editing.email}</p>
             {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg">{error}</p>}
             <form onSubmit={handleEdit} className="space-y-4">
@@ -155,9 +142,9 @@ export default function SystemUsers() {
                 <button type="submit" disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50">{saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />} Save Changes</button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
