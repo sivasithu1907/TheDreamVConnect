@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Search, Package2, Pencil, Trash2, Check } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { Modal } from '../../components/Modal';
+import { COMMON_UNITS } from '../../lib/utils';
 
 interface Product {
   id: number; name: string; sku: string; unit: string;
@@ -31,6 +32,8 @@ export default function Products() {
   const [form,       setForm]       = useState(emptyForm);
   const [saving,     setSaving]     = useState(false);
   const [error,      setError]      = useState<string|null>(null);
+  const [isCustomUnit, setIsCustomUnit] = useState(false);
+  const [skuMode, setSkuMode] = useState<'auto'|'manual'>('auto');
 
   const load = () => {
     setLoading(true);
@@ -41,9 +44,22 @@ export default function Products() {
   };
   useEffect(load, []);
 
-  const openCreate = () => { setForm(emptyForm); setEditing(null); setError(null); setModal('create'); };
+  // Auto-preview the next SKU whenever category/brand change, while in create mode + auto SKU mode
+  useEffect(() => {
+    if (modal !== 'create' || skuMode !== 'auto') return;
+    const params = new URLSearchParams();
+    if (form.categoryId) params.set('categoryId', form.categoryId);
+    if (form.brandId) params.set('brandId', form.brandId);
+    get<{ sku: string }>(`/api/products/next-sku?${params.toString()}`)
+      .then(res => setForm(f => ({ ...f, sku: res.sku })))
+      .catch(() => {});
+  }, [form.categoryId, form.brandId, modal, skuMode]);
+
+  const openCreate = () => { setForm(emptyForm); setEditing(null); setError(null); setIsCustomUnit(false); setSkuMode('auto'); setModal('create'); };
   const openEdit   = (p: Product) => {
     setForm({ name: p.name, sku: p.sku, unit: p.unit, categoryId: p.categoryId?.toString() ?? '', brandId: p.brandId?.toString() ?? '', description: p.description ?? '', minOrderQty: p.minOrderQty, status: p.status });
+    setIsCustomUnit(!COMMON_UNITS.includes(p.unit));
+    setSkuMode('manual'); // never auto-regenerate an existing product's SKU
     setEditing(p); setError(null); setModal('edit');
   };
 
@@ -137,8 +153,17 @@ export default function Products() {
               <input required value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">SKU *</label>
-              <input required value={form.sku} onChange={e => setForm(f => ({...f, sku: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs text-slate-400">SKU *</label>
+                {modal === 'create' && (
+                  <button type="button" onClick={() => setSkuMode(m => m === 'auto' ? 'manual' : 'auto')} className="text-xs text-blue-400 hover:text-blue-300">
+                    {skuMode === 'auto' ? 'Edit manually' : 'Auto-generate'}
+                  </button>
+                )}
+              </div>
+              <input required readOnly={skuMode === 'auto' && modal === 'create'} value={form.sku} onChange={e => setForm(f => ({...f, sku: e.target.value}))}
+                className={`w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${skuMode === 'auto' && modal === 'create' ? 'opacity-70 cursor-not-allowed' : ''}`} />
+              {skuMode === 'auto' && modal === 'create' && <p className="text-xs text-slate-500 mt-1">Auto-generated from category + brand</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -160,7 +185,17 @@ export default function Products() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-slate-400 mb-1">Unit</label>
-              <input value={form.unit} onChange={e => setForm(f => ({...f, unit: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+              {isCustomUnit ? (
+                <div className="flex gap-1.5">
+                  <input autoFocus value={form.unit} onChange={e => setForm(f => ({...f, unit: e.target.value}))} placeholder="Custom unit" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                  <button type="button" onClick={() => { setIsCustomUnit(false); setForm(f => ({...f, unit: 'pcs'})); }} className="px-2 text-xs text-slate-400 hover:text-white border border-white/10 rounded-lg shrink-0">List</button>
+                </div>
+              ) : (
+                <select value={form.unit} onChange={e => { if (e.target.value === '__custom__') { setIsCustomUnit(true); setForm(f => ({...f, unit: ''})); } else { setForm(f => ({...f, unit: e.target.value})); } }} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                  {COMMON_UNITS.map(u => <option key={u} value={u} className="bg-slate-800">{u}</option>)}
+                  <option value="__custom__" className="bg-slate-800">Custom…</option>
+                </select>
+              )}
             </div>
             <div>
               <label className="block text-xs text-slate-400 mb-1">Min Order Qty</label>
