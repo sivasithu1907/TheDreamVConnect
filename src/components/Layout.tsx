@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Folders, Tags, Warehouse,
   Truck, Users, LogOut, FileText, Building2, UserCog,
-  ShoppingBag, Menu, X, ChevronRight
+  ShoppingBag, Menu, X, ChevronRight, Inbox, MessageSquarePlus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
@@ -38,8 +38,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Operations',
     items: [
-      { name: 'Inventory', path: '/inventory', icon: Warehouse, roles: ['super_admin','inventory_manager','operations_executive'] },
-      { name: 'Shipments', path: '/shipments', icon: Truck,     roles: ['super_admin','inventory_manager','operations_executive'] },
+      { name: 'Inventory',   path: '/inventory',   icon: Warehouse, roles: ['super_admin','inventory_manager','operations_executive'] },
+      { name: 'Warehouses',  path: '/warehouses',  icon: Building2, roles: ['super_admin'] },
+      { name: 'Shipments',   path: '/shipments',   icon: Truck,     roles: ['super_admin','inventory_manager','operations_executive'] },
     ],
   },
   {
@@ -48,6 +49,7 @@ const NAV_GROUPS: NavGroup[] = [
       { name: 'Clients',       path: '/clients',       icon: Building2, roles: ['super_admin','sales_manager'] },
       { name: 'System Users',  path: '/users/system',  icon: UserCog,   roles: ['super_admin'] },
       { name: 'Client Users',  path: '/users/clients', icon: Users,     roles: ['super_admin'] },
+      { name: 'Requests',      path: '/requests',      icon: Inbox,     roles: ['super_admin','sales_manager','inventory_manager'] },
     ],
   },
   {
@@ -59,9 +61,11 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Portal',
     items: [
-      { name: 'Dashboard',        path: '/portal',           icon: LayoutDashboard, roles: ['client_admin','client_purchasing_officer','client_viewer'] },
-      { name: 'Available Stock',  path: '/portal/stock',     icon: ShoppingBag,     roles: ['client_admin','client_purchasing_officer','client_viewer'] },
-      { name: 'Incoming Stock',   path: '/portal/shipments', icon: Truck,           roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+      { name: 'Dashboard',        path: '/portal',           icon: LayoutDashboard,  roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+      { name: 'Available Stock',  path: '/portal/stock',     icon: ShoppingBag,      roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+      { name: 'Incoming Stock',   path: '/portal/shipments', icon: Truck,            roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+      { name: 'Requests',         path: '/portal/requests',  icon: MessageSquarePlus,roles: ['client_admin','client_purchasing_officer','client_viewer'] },
+      { name: 'My Account',       path: '/portal/account',   icon: UserCog,          roles: ['client_admin','client_purchasing_officer','client_viewer'] },
     ],
   },
 ];
