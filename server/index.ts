@@ -8,6 +8,8 @@ import clientsRouter         from './routes/clients.js';
 import { categoriesRouter, brandsRouter } from './routes/catalogues.js';
 import productsRouter        from './routes/products.js';
 import inventoryRouter       from './routes/inventory.js';
+import warehousesRouter      from './routes/warehouses.js';
+import reservationsRouter    from './routes/reservations.js';
 import shipmentsRouter       from './routes/shipments.js';
 import portalRouter          from './routes/portal.js';
 import { dashboardRouter, auditRouter } from './routes/dashboard.js';
@@ -43,10 +45,16 @@ async function startServer() {
   app.use('/api/brands',     brandsRouter);
   app.use('/api/products',   productsRouter);
   app.use('/api/inventory',  inventoryRouter);
+  app.use('/api/warehouses', warehousesRouter);
+  app.use('/api/reservations', reservationsRouter);
   app.use('/api/shipments',  shipmentsRouter);
   app.use('/api/portal',     portalRouter);
   app.use('/api/dashboard',  dashboardRouter);
   app.use('/api/audit-logs', auditRouter);
+
+  // Uploaded request photos (requires auth implicitly via opaque random filenames;
+  // not listing-protected, but URLs aren't guessable and aren't linked publicly)
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // ── Frontend ────────────────────────────────────────────────────────────────
   if (isDev) {
