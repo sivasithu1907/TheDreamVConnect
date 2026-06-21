@@ -6,18 +6,18 @@ import { ROLE_LABELS, formatDateTime } from '../../lib/utils';
 import { Modal } from '../../components/Modal';
 
 interface User {
-  id: number; email: string; name: string; role: string;
+  id: number; email: string; name: string; jobTitle: string|null; role: string;
   clientId: number|null; status: string; lastLoginAt: string|null;
 }
 interface Client { id: number; companyName: string; }
 
 const CLIENT_ROLES = ['client_admin','client_purchasing_officer','client_viewer'] as const;
-const createEmpty = { email:'', password:'', name:'', role:'client_viewer' as string, clientId:'' };
-const editEmpty   = { name:'', role:'client_viewer' as string, clientId:'' as string, status:'active' as string, password:'' };
+const createEmpty = { email:'', password:'', name:'', jobTitle:'', role:'client_viewer' as string, clientId:'' };
+const editEmpty   = { name:'', jobTitle:'', role:'client_viewer' as string, clientId:'' as string, status:'active' as string, password:'' };
 
 export default function ClientUsers() {
   const { get, post, put } = useApi();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers]     = useState<User[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,11 +43,13 @@ export default function ClientUsers() {
     if (clientId && clients.length > 0) {
       setCreateForm(f => ({ ...f, clientId }));
       setModal('create');
+      // Clear the query param so submitting/closing the form doesn't re-trigger this effect
+      setSearchParams({}, { replace: true });
     }
   }, [searchParams, clients]);
 
   const openCreate = () => { setCreateForm(createEmpty); setError(null); setModal('create'); };
-  const openEdit = (u: User) => { setEditForm({ name: u.name, role: u.role, clientId: u.clientId?.toString() ?? '', status: u.status, password: '' }); setEditing(u); setError(null); setModal('edit'); };
+  const openEdit = (u: User) => { setEditForm({ name: u.name, jobTitle: u.jobTitle ?? '', role: u.role, clientId: u.clientId?.toString() ?? '', status: u.status, password: '' }); setEditing(u); setError(null); setModal('edit'); };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setError(null);
@@ -85,13 +87,14 @@ export default function ClientUsers() {
       <div className="glass-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-white/5">{['Name','Email','Client','Role','Last Login','Status',''].map(h => <th key={h} className="px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-left">{h}</th>)}</tr></thead>
+            <thead><tr className="border-b border-white/5">{['Name','Job Title','Email','Client','Role','Last Login','Status',''].map(h => <th key={h} className="px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-left">{h}</th>)}</tr></thead>
             <tbody className="divide-y divide-white/5">
-              {loading ? <tr><td colSpan={7} className="px-5 py-10 text-center text-slate-500">Loading…</td></tr>
-              : users.length === 0 ? <tr><td colSpan={7} className="px-5 py-12 text-center"><UsersIcon className="h-10 w-10 text-slate-600 mx-auto mb-2" /><p className="text-slate-400">No client users yet</p></td></tr>
+              {loading ? <tr><td colSpan={8} className="px-5 py-10 text-center text-slate-500">Loading…</td></tr>
+              : users.length === 0 ? <tr><td colSpan={8} className="px-5 py-12 text-center"><UsersIcon className="h-10 w-10 text-slate-600 mx-auto mb-2" /><p className="text-slate-400">No client users yet</p></td></tr>
               : users.map(u => (
                 <tr key={u.id} className="table-row-hover">
                   <td className="px-5 py-3 font-medium text-white">{u.name}</td>
+                  <td className="px-5 py-3 text-slate-400 text-xs">{u.jobTitle ?? '—'}</td>
                   <td className="px-5 py-3 text-slate-400 text-xs">{u.email}</td>
                   <td className="px-5 py-3 text-slate-400 text-xs">{clients.find(c => c.id === u.clientId)?.companyName ?? '—'}</td>
                   <td className="px-5 py-3"><span className="text-xs text-slate-300">{ROLE_LABELS[u.role] ?? u.role}</span></td>
@@ -119,7 +122,10 @@ export default function ClientUsers() {
               {clients.map(c => <option key={c.id} value={c.id} className="bg-slate-800">{c.companyName}</option>)}
             </select>
           </div>
-          <div><label className="block text-xs text-slate-400 mb-1">Full Name *</label><input required value={createForm.name} onChange={e => setCreateForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="block text-xs text-slate-400 mb-1">Name *</label><input required value={createForm.name} onChange={e => setCreateForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+            <div><label className="block text-xs text-slate-400 mb-1">Job Title</label><input value={createForm.jobTitle} onChange={e => setCreateForm(f => ({...f, jobTitle: e.target.value}))} placeholder="e.g. Procurement Manager" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+          </div>
           <div><label className="block text-xs text-slate-400 mb-1">Email *</label><input required type="email" value={createForm.email} onChange={e => setCreateForm(f => ({...f, email: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
           <div><label className="block text-xs text-slate-400 mb-1">Initial Password * (min 8 chars)</label><input required type="password" minLength={8} value={createForm.password} onChange={e => setCreateForm(f => ({...f, password: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
           <div><label className="block text-xs text-slate-400 mb-1">Role *</label>
@@ -141,7 +147,10 @@ export default function ClientUsers() {
             <p className="text-xs text-slate-500 mb-4">{editing.email}</p>
             {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg">{error}</p>}
             <form onSubmit={handleEdit} className="space-y-4">
-              <div><label className="block text-xs text-slate-400 mb-1">Full Name</label><input required value={editForm.name} onChange={e => setEditForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="block text-xs text-slate-400 mb-1">Name</label><input required value={editForm.name} onChange={e => setEditForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+                <div><label className="block text-xs text-slate-400 mb-1">Job Title</label><input value={editForm.jobTitle} onChange={e => setEditForm(f => ({...f, jobTitle: e.target.value}))} placeholder="e.g. Procurement Manager" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
+              </div>
               <div><label className="block text-xs text-slate-400 mb-1">Client Company</label>
                 <select value={editForm.clientId} onChange={e => setEditForm(f => ({...f, clientId: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                   <option value="" className="bg-slate-800">— None —</option>
