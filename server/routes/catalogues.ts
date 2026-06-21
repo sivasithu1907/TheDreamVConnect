@@ -17,12 +17,11 @@ brandsRouter.use(requireAuth);
 const categorySchema = z.object({
   name:        z.string().min(1),
   description: z.string().optional().nullable(),
-  sortOrder:   z.number().int().optional(),
 });
 
 categoriesRouter.get('/', requireRole(INTERNAL_ROLES), async (_req, res) => {
   try {
-    const all = await db.select().from(categories).orderBy(categories.sortOrder, categories.name);
+    const all = await db.select().from(categories).orderBy(categories.name);
     res.json(all);
   } catch (err: unknown) { res.status(500).json({ error: err instanceof Error ? err.message : 'Error' }); }
 });
