@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Search, Warehouse, SlidersHorizontal, X, Check } from 'lucide-react';
+import { Search, Warehouse, SlidersHorizontal, Check } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
+import { Modal } from '../../components/Modal';
 
 interface InventoryRow {
   id: number; productId: number; productName: string; productSku: string;
@@ -84,14 +85,9 @@ export default function Inventory() {
         </div>
       </div>
 
-      {adjusting && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 py-8">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setAdjusting(null)} />
-          <div className="relative z-10 glass-card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white">Stock Adjustment</h2>
-              <button onClick={() => setAdjusting(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
-            </div>
+      <Modal open={!!adjusting} onClose={() => setAdjusting(null)} title="Stock Adjustment">
+        {adjusting && (
+          <>
             <div className="mb-4 p-3 bg-white/5 rounded-lg">
               <p className="text-sm font-medium text-white">{adjusting.productName}</p>
               <p className="text-xs font-mono text-slate-400">{adjusting.productSku}</p>
@@ -123,9 +119,9 @@ export default function Inventory() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
