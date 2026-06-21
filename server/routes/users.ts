@@ -14,12 +14,14 @@ const createUserSchema = z.object({
   email:    z.string().email(),
   password: z.string().min(8),
   name:     z.string().min(1),
+  jobTitle: z.string().optional().nullable(),
   role:     z.enum(['super_admin','inventory_manager','sales_manager','operations_executive','client_admin','client_purchasing_officer','client_viewer']),
   clientId: z.number().int().optional().nullable(),
 });
 
 const updateUserSchema = z.object({
   name:     z.string().min(1).optional(),
+  jobTitle: z.string().optional().nullable(),
   role:     z.enum(['super_admin','inventory_manager','sales_manager','operations_executive','client_admin','client_purchasing_officer','client_viewer']).optional(),
   clientId: z.number().int().optional().nullable(),
   status:   z.enum(['active','inactive']).optional(),
@@ -30,7 +32,7 @@ const updateUserSchema = z.object({
 router.get('/', requireRole(ADMIN_ROLES.concat(['sales_manager'])), async (req: AuthRequest, res) => {
   try {
     const all = await db.select({
-      id: users.id, email: users.email, name: users.name,
+      id: users.id, email: users.email, name: users.name, jobTitle: users.jobTitle,
       role: users.role, clientId: users.clientId, status: users.status,
       lastLoginAt: users.lastLoginAt, createdAt: users.createdAt,
     }).from(users);
@@ -44,7 +46,7 @@ router.get('/', requireRole(ADMIN_ROLES.concat(['sales_manager'])), async (req: 
 router.post('/', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() }); return; }
-  const { email, password, name, role, clientId } = parsed.data;
+  const { email, password, name, jobTitle, role, clientId } = parsed.data;
 
   try {
     const existing = await db.select().from(users).where(eq(users.email, email.toLowerCase()));
@@ -52,9 +54,9 @@ router.post('/', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
 
     const passwordHash = await bcrypt.hash(password, 12);
     const [user] = await db.insert(users).values({
-      email: email.toLowerCase(), passwordHash, name, role,
+      email: email.toLowerCase(), passwordHash, name, jobTitle, role,
       clientId: clientId ?? null, invitedBy: req.user!.id,
-    }).returning({ id: users.id, email: users.email, name: users.name, role: users.role, clientId: users.clientId, status: users.status });
+    }).returning({ id: users.id, email: users.email, name: users.name, jobTitle: users.jobTitle, role: users.role, clientId: users.clientId, status: users.status });
 
     await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'CREATE', resource: 'user', resourceId: user.id, details: { email, role } });
     res.status(201).json(user);
@@ -79,7 +81,7 @@ router.put('/:id', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
     const [updated] = await db.update(users)
       .set(updateValues)
       .where(eq(users.id, id))
-      .returning({ id: users.id, email: users.email, name: users.name, role: users.role, status: users.status });
+      .returning({ id: users.id, email: users.email, name: users.name, jobTitle: users.jobTitle, role: users.role, status: users.status });
     if (!updated) { res.status(404).json({ error: 'User not found' }); return; }
     await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: password ? 'UPDATE_PASSWORD' : 'UPDATE', resource: 'user', resourceId: id, details: rest });
     res.json(updated);
