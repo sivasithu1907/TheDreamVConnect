@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/index.js';
-import { products, inventory, warehouses } from '../db/schema.js';
-import { eq, isNull, and } from 'drizzle-orm';
+import { products, inventory, warehouses, categories, brands } from '../db/schema.js';
+import { eq, isNull, and, like, desc } from 'drizzle-orm';
 import { requireAuth, requireRole, AuthRequest, ADMIN_ROLES, INTERNAL_ROLES } from '../middleware/auth.js';
 import { writeAuditLog } from '../lib/audit.js';
 
@@ -11,7 +11,7 @@ router.use(requireAuth);
 
 const productSchema = z.object({
   name:        z.string().min(1),
-  sku:         z.string().min(1),
+  sku:         z.string().min(1).optional(),  // auto-generated if omitted
   brandId:     z.number().int().optional().nullable(),
   categoryId:  z.number().int().optional().nullable(),
   description: z.string().optional().nullable(),
@@ -22,6 +22,47 @@ const productSchema = z.object({
   status:      z.enum(['active', 'draft', 'archived']).default('active'),
 });
 
+/** Builds a 3-letter prefix code from a name, e.g. "Toners" -> "TON", "HP" -> "HP". */
+function codeFromName(name: string | undefined | null): string {
+  if (!name) return 'GEN';
+  const cleaned = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  return (cleaned.slice(0, 3) || 'GEN').padEnd(3, 'X');
+}
+
+/**
+ * Generates the next SKU in the pattern CAT-BRD-0001, scoped to that
+ * category+brand prefix so numbering restarts per combination.
+ */
+async function generateSku(categoryId: number | null | undefined, brandId: number | null | undefined): Promise<string> {
+  let catCode = 'GEN';
+  let brdCode = 'GEN';
+
+  if (categoryId) {
+    const [cat] = await db.select({ name: categories.name }).from(categories).where(eq(categories.id, categoryId));
+    if (cat) catCode = codeFromName(cat.name);
+  }
+  if (brandId) {
+    const [brand] = await db.select({ name: brands.name }).from(brands).where(eq(brands.id, brandId));
+    if (brand) brdCode = codeFromName(brand.name);
+  }
+
+  const prefix = `${catCode}-${brdCode}-`;
+  const existing = await db
+    .select({ sku: products.sku })
+    .from(products)
+    .where(like(products.sku, `${prefix}%`))
+    .orderBy(desc(products.sku))
+    .limit(1);
+
+  let nextNum = 1;
+  if (existing.length) {
+    const match = existing[0].sku.match(/(\d+)$/);
+    if (match) nextNum = parseInt(match[1], 10) + 1;
+  }
+
+  return `${prefix}${String(nextNum).padStart(4, '0')}`;
+}
+
 // GET /api/products — internal only (no client filtering here, see portal route)
 router.get('/', requireRole(INTERNAL_ROLES), async (_req, res) => {
   try {
@@ -30,6 +71,19 @@ router.get('/', requireRole(INTERNAL_ROLES), async (_req, res) => {
       .from(products)
       .where(isNull(products.deletedAt));
     res.json(all);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
+  }
+});
+
+// GET /api/products/next-sku — preview the SKU that would be generated for a category/brand combo
+// NOTE: must be registered before GET /:id, otherwise Express matches "next-sku" as an :id param.
+router.get('/next-sku', requireRole(['super_admin', 'inventory_manager']), async (req: AuthRequest, res) => {
+  const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : null;
+  const brandId     = req.query.brandId ? parseInt(req.query.brandId as string) : null;
+  try {
+    const sku = await generateSku(categoryId, brandId);
+    res.json({ sku });
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
   }
@@ -53,18 +107,19 @@ router.post('/', requireRole(['super_admin', 'inventory_manager']), async (req: 
   if (!parsed.success) { res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() }); return; }
 
   try {
+    const sku = parsed.data.sku || await generateSku(parsed.data.categoryId, parsed.data.brandId);
+
     const [product] = await db
       .insert(products)
-      .values({ ...parsed.data, createdBy: req.user!.id })
+      .values({ ...parsed.data, sku, createdBy: req.user!.id })
       .returning();
 
-    // Auto-create inventory record on default warehouse
-    const defaultWarehouse = await db.select().from(warehouses).where(eq(warehouses.isDefault, true));
-    if (defaultWarehouse.length) {
-      await db.insert(inventory).values({
-        productId:   product.id,
-        warehouseId: defaultWarehouse[0].id,
-      }).onConflictDoNothing();
+    // Auto-create an inventory record (starting at 0 stock) for every active warehouse
+    const activeWarehouses = await db.select().from(warehouses).where(eq(warehouses.status, 'active'));
+    if (activeWarehouses.length) {
+      await db.insert(inventory).values(
+        activeWarehouses.map(w => ({ productId: product.id, warehouseId: w.id }))
+      ).onConflictDoNothing();
     }
 
     await writeAuditLog({
@@ -74,6 +129,10 @@ router.post('/', requireRole(['super_admin', 'inventory_manager']), async (req: 
     });
     res.status(201).json(product);
   } catch (err: unknown) {
+    if (err instanceof Error && /unique/i.test(err.message) && /sku/i.test(err.message)) {
+      res.status(409).json({ error: 'That SKU is already in use. Try again or enter one manually.' });
+      return;
+    }
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
   }
 });
