@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Package2, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Plus, Search, Package2, Pencil, Trash2, Check } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
+import { Modal } from '../../components/Modal';
 
 interface Product {
   id: number; name: string; sku: string; unit: string;
@@ -127,76 +128,66 @@ export default function Products() {
         </div>
       </div>
 
-      {/* Modal */}
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 py-8">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setModal(null)} />
-          <div className="relative z-10 glass-card w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-white">{modal === 'create' ? 'Add Product' : 'Edit Product'}</h2>
-              <button onClick={() => setModal(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
+      <Modal open={!!modal} onClose={() => setModal(null)} maxWidth="lg" title={modal === 'create' ? 'Add Product' : 'Edit Product'}>
+        {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg">{error}</p>}
+        <form onSubmit={handleSave} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Product Name *</label>
+              <input required value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
             </div>
-            {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg">{error}</p>}
-            <form onSubmit={handleSave} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Product Name *</label>
-                  <input required value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">SKU *</label>
-                  <input required value={form.sku} onChange={e => setForm(f => ({...f, sku: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Category</label>
-                  <select value={form.categoryId} onChange={e => setForm(f => ({...f, categoryId: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <option value="">— None —</option>
-                    {categories.map(c => <option key={c.id} value={c.id} className="bg-slate-800">{c.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Brand</label>
-                  <select value={form.brandId} onChange={e => setForm(f => ({...f, brandId: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <option value="">— None —</option>
-                    {brands.map(b => <option key={b.id} value={b.id} className="bg-slate-800">{b.name}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Unit</label>
-                  <input value={form.unit} onChange={e => setForm(f => ({...f, unit: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Min Order Qty</label>
-                  <input type="number" min={1} value={form.minOrderQty} onChange={e => setForm(f => ({...f, minOrderQty: parseInt(e.target.value)}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Status</label>
-                  <select value={form.status} onChange={e => setForm(f => ({...f, status: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <option value="active" className="bg-slate-800">Active</option>
-                    <option value="draft" className="bg-slate-800">Draft</option>
-                    <option value="archived" className="bg-slate-800">Archived</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Description</label>
-                <textarea rows={2} value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-slate-400 hover:text-white border border-white/10 rounded-lg transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 transition-colors">
-                  {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
-                  {modal === 'create' ? 'Create' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">SKU *</label>
+              <input required value={form.sku} onChange={e => setForm(f => ({...f, sku: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
           </div>
-        </div>
-      )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Category</label>
+              <select value={form.categoryId} onChange={e => setForm(f => ({...f, categoryId: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="">— None —</option>
+                {categories.map(c => <option key={c.id} value={c.id} className="bg-slate-800">{c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Brand</label>
+              <select value={form.brandId} onChange={e => setForm(f => ({...f, brandId: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="">— None —</option>
+                {brands.map(b => <option key={b.id} value={b.id} className="bg-slate-800">{b.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Unit</label>
+              <input value={form.unit} onChange={e => setForm(f => ({...f, unit: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Min Order Qty</label>
+              <input type="number" min={1} value={form.minOrderQty} onChange={e => setForm(f => ({...f, minOrderQty: parseInt(e.target.value)}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Status</label>
+              <select value={form.status} onChange={e => setForm(f => ({...f, status: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="active" className="bg-slate-800">Active</option>
+                <option value="draft" className="bg-slate-800">Draft</option>
+                <option value="archived" className="bg-slate-800">Archived</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Description</label>
+            <textarea rows={2} value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-slate-400 hover:text-white border border-white/10 rounded-lg transition-colors">Cancel</button>
+            <button type="submit" disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 transition-colors">
+              {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
+              {modal === 'create' ? 'Create' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
