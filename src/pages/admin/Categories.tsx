@@ -4,8 +4,8 @@ import { Plus, Pencil, Trash2, Check, Folders } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { Modal } from '../../components/Modal';
 
-interface Category { id: number; name: string; description: string | null; sortOrder: number; }
-const empty = { name: '', description: '', sortOrder: 0 };
+interface Category { id: number; name: string; description: string | null; }
+const empty = { name: '', description: '' };
 
 export default function Categories() {
   const { get, post, put, del } = useApi();
@@ -21,7 +21,7 @@ export default function Categories() {
   useEffect(load, []);
 
   const openCreate = () => { setForm(empty); setEditing(null); setError(null); setModal('create'); };
-  const openEdit   = (c: Category) => { setForm({ name: c.name, description: c.description ?? '', sortOrder: c.sortOrder }); setEditing(c); setError(null); setModal('edit'); };
+  const openEdit   = (c: Category) => { setForm({ name: c.name, description: c.description ?? '' }); setEditing(c); setError(null); setModal('edit'); };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setError(null);
@@ -48,16 +48,15 @@ export default function Categories() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="border-b border-white/5">
-              {['Name','Description','Sort Order',''].map(h => <th key={h} className="px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-left">{h}</th>)}
+              {['Name','Description',''].map(h => <th key={h} className="px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-left">{h}</th>)}
             </tr></thead>
             <tbody className="divide-y divide-white/5">
-              {loading ? <tr><td colSpan={4} className="px-5 py-10 text-center text-slate-500">Loading…</td></tr>
-              : items.length === 0 ? <tr><td colSpan={4} className="px-5 py-12 text-center"><Folders className="h-10 w-10 text-slate-600 mx-auto mb-2" /><p className="text-slate-400">No categories yet</p></td></tr>
+              {loading ? <tr><td colSpan={3} className="px-5 py-10 text-center text-slate-500">Loading…</td></tr>
+              : items.length === 0 ? <tr><td colSpan={3} className="px-5 py-12 text-center"><Folders className="h-10 w-10 text-slate-600 mx-auto mb-2" /><p className="text-slate-400">No categories yet</p></td></tr>
               : items.map(c => (
                 <tr key={c.id} className="table-row-hover">
                   <td className="px-5 py-3 font-medium text-white">{c.name}</td>
                   <td className="px-5 py-3 text-slate-400">{c.description ?? '—'}</td>
-                  <td className="px-5 py-3 text-slate-400">{c.sortOrder}</td>
                   <td className="px-5 py-3"><div className="flex gap-1 justify-end">
                     <button onClick={() => openEdit(c)} className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors"><Pencil className="h-4 w-4" /></button>
                     <button onClick={() => handleDelete(c.id)} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"><Trash2 className="h-4 w-4" /></button>
@@ -73,7 +72,6 @@ export default function Categories() {
         <form onSubmit={handleSave} className="space-y-4">
           <div><label className="block text-xs text-slate-400 mb-1">Name *</label><input required value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
           <div><label className="block text-xs text-slate-400 mb-1">Description</label><input value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
-          <div><label className="block text-xs text-slate-400 mb-1">Sort Order</label><input type="number" value={form.sortOrder} onChange={e => setForm(f => ({...f, sortOrder: parseInt(e.target.value)}))} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" /></div>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setModal(null)} className="px-4 py-2 text-sm text-slate-400 border border-white/10 rounded-lg">Cancel</button>
             <button type="submit" disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50">{saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />} Save</button>
