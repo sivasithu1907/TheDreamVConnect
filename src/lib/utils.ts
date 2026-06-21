@@ -24,3 +24,7 @@ export const ROLE_LABELS: Record<string, string> = {
   client_purchasing_officer:    'Purchasing Officer',
   client_viewer:                'Viewer',
 };
+
+export const COMMON_UNITS = ['pcs', 'box', 'carton', 'kg', 'liter', 'set', 'pack', 'roll'];
+
+export const PAYMENT_TERMS_OPTIONS = ['Immediate Payment', '7 Days', '21 Days', '30 Days', 'Custom'];
