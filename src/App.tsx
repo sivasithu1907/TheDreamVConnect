@@ -7,6 +7,8 @@ import Products from './pages/admin/Products';
 import Categories from './pages/admin/Categories';
 import Brands from './pages/admin/Brands';
 import Inventory from './pages/admin/Inventory';
+import Warehouses from './pages/admin/Warehouses';
+import Requests from './pages/admin/Requests';
 import Shipments from './pages/admin/Shipments';
 import Clients from './pages/admin/Clients';
 import SystemUsers from './pages/admin/SystemUsers';
@@ -15,6 +17,8 @@ import AuditLogs from './pages/admin/AuditLogs';
 import PortalDashboard from './pages/portal/PortalDashboard';
 import AvailableStock from './pages/portal/AvailableStock';
 import IncomingShipments from './pages/portal/IncomingShipments';
+import PortalAccount from './pages/portal/PortalAccount';
+import PortalRequests from './pages/portal/PortalRequests';
 import { useAuth } from './context/AuthContext';
 
 const INTERNAL = ['super_admin', 'inventory_manager', 'sales_manager', 'operations_executive'];
@@ -41,6 +45,8 @@ export default function App() {
         <Route path="categories" element={<ProtectedRoute roles={ADMIN}><Categories /></ProtectedRoute>} />
         <Route path="brands"     element={<ProtectedRoute roles={ADMIN}><Brands /></ProtectedRoute>} />
         <Route path="inventory"  element={<ProtectedRoute roles={INTERNAL}><Inventory /></ProtectedRoute>} />
+        <Route path="warehouses" element={<ProtectedRoute roles={ADMIN}><Warehouses /></ProtectedRoute>} />
+        <Route path="requests"   element={<ProtectedRoute roles={[...ADMIN, 'sales_manager', 'inventory_manager']}><Requests /></ProtectedRoute>} />
         <Route path="shipments"  element={<ProtectedRoute roles={INTERNAL}><Shipments /></ProtectedRoute>} />
         <Route path="clients"    element={<ProtectedRoute roles={[...ADMIN, 'sales_manager']}><Clients /></ProtectedRoute>} />
         <Route path="users/system"  element={<ProtectedRoute roles={ADMIN}><SystemUsers /></ProtectedRoute>} />
@@ -51,6 +57,8 @@ export default function App() {
         <Route path="portal"            element={<ProtectedRoute roles={CLIENT}><PortalDashboard /></ProtectedRoute>} />
         <Route path="portal/stock"      element={<ProtectedRoute roles={CLIENT}><AvailableStock /></ProtectedRoute>} />
         <Route path="portal/shipments"  element={<ProtectedRoute roles={CLIENT}><IncomingShipments /></ProtectedRoute>} />
+        <Route path="portal/account"    element={<ProtectedRoute roles={CLIENT}><PortalAccount /></ProtectedRoute>} />
+        <Route path="portal/requests"   element={<ProtectedRoute roles={CLIENT}><PortalRequests /></ProtectedRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
