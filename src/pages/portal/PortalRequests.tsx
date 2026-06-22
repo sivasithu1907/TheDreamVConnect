@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { formatDateTime } from '../../lib/utils';
 import { Modal } from '../../components/Modal';
 
-interface StockItem { productId: number; productName: string; productSku: string; availableStock: number; }
+interface StockItem { productId: number; productName: string; productSku: string; availableStock: number; warehouseId: number; }
 interface Attachment { id: number; fileUrl: string; fileName: string; }
 interface RequestRow {
   id: number; requestType: 'stock_reservation'|'special_request';
@@ -59,11 +59,14 @@ export default function PortalRequests() {
   const submitReserve = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!productId) { setError('Select a product'); return; }
+    const selected = stock.find(s => s.productId === parseInt(productId));
+    if (!selected) { setError('Selected product not found'); return; }
     setSaving(true); setError(null);
     try {
       const form = new FormData();
       form.append('requestType', 'stock_reservation');
       form.append('productId', productId);
+      form.append('warehouseId', String(selected.warehouseId));
       form.append('quantity', String(quantity));
       if (reserveNotes) form.append('notes', reserveNotes);
       const res = await fetch('/api/reservations', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
@@ -154,7 +157,18 @@ export default function PortalRequests() {
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Quantity *</label>
-            <input required type="number" min={1} value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            <input
+              required type="number" min={1}
+              max={stock.find(s => s.productId === parseInt(productId))?.availableStock}
+              value={quantity}
+              onChange={e => setQuantity(parseInt(e.target.value) || 1)}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            {productId && (
+              <p className="text-xs text-slate-500 mt-1">
+                {stock.find(s => s.productId === parseInt(productId))?.availableStock ?? 0} units currently available
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs text-slate-400 mb-1">Notes</label>
