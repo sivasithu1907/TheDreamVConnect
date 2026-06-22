@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { incomingShipments, shipmentItems, inventory, products } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { requireAuth, requireRole, AuthRequest, INTERNAL_ROLES } from '../middleware/auth.js';
 import { writeAuditLog } from '../lib/audit.js';
 
@@ -69,7 +69,7 @@ router.post('/', requireRole(['super_admin', 'inventory_manager']), async (req: 
   }
 });
 
-// POST /api/shipments/:id/receive — mark arrived, update inventory
+// POST /api/shipments/:id/receive — mark arrived (or partially received), update inventory
 router.post('/:id/receive', requireRole(['super_admin', 'inventory_manager']), async (req: AuthRequest, res) => {
   const shipmentId = parseInt(req.params.id);
   const { receivedItems } = z.object({
@@ -77,20 +77,53 @@ router.post('/:id/receive', requireRole(['super_admin', 'inventory_manager']), a
   }).parse(req.body);
 
   try {
-    for (const ri of receivedItems) {
-      const [item] = await db.select().from(shipmentItems).where(eq(shipmentItems.id, ri.itemId));
-      if (!item) continue;
-      await db.update(shipmentItems).set({ receivedQty: ri.receivedQty }).where(eq(shipmentItems.id, ri.itemId));
+    const allItems = await db.select().from(shipmentItems).where(eq(shipmentItems.shipmentId, shipmentId));
+    if (!allItems.length) { res.status(404).json({ error: 'Shipment not found or has no items' }); return; }
 
-      // Add to physical stock
-      const invRows = await db.select().from(inventory).where(eq(inventory.productId, item.productId) && eq(inventory.warehouseId, item.warehouseId));
-      if (invRows.length) {
-        await db.update(inventory).set({ physicalStock: invRows[0].physicalStock + ri.receivedQty, updatedAt: new Date() }).where(eq(inventory.id, invRows[0].id));
+    const receivedMap = new Map(receivedItems.map(ri => [ri.itemId, ri.receivedQty]));
+
+    for (const item of allItems) {
+      if (!receivedMap.has(item.id)) continue;
+      const newReceivedQty = receivedMap.get(item.id)!;
+      const previouslyReceived = item.receivedQty;
+      const delta = newReceivedQty - previouslyReceived;
+
+      if (delta === 0) continue;
+      if (newReceivedQty > item.quantity) {
+        res.status(400).json({ error: `Received quantity for an item exceeds ordered quantity (ordered ${item.quantity}, attempted ${newReceivedQty})` });
+        return;
+      }
+
+      await db.update(shipmentItems).set({ receivedQty: newReceivedQty }).where(eq(shipmentItems.id, item.id));
+
+      // Only the newly-arrived delta gets added to physical stock — this correctly supports
+      // receiving the same shipment across multiple sessions (e.g. half today, rest next week)
+      // without double-counting stock that was already added on a previous receive.
+      const [inv] = await db.select().from(inventory)
+        .where(and(eq(inventory.productId, item.productId), eq(inventory.warehouseId, item.warehouseId)));
+      if (inv) {
+        await db.update(inventory)
+          .set({ physicalStock: inv.physicalStock + delta, updatedAt: new Date() })
+          .where(eq(inventory.id, inv.id));
       }
     }
-    await db.update(incomingShipments).set({ status: 'arrived', arrivedDate: new Date(), updatedAt: new Date() }).where(eq(incomingShipments.id, shipmentId));
-    await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'RECEIVE', resource: 'shipment', resourceId: shipmentId });
-    res.json({ success: true });
+
+    // Determine whether everything ordered has now been fully received, across all line items
+    // (using the just-submitted quantities merged with whatever was already recorded before this call).
+    const updatedItems = await db.select().from(shipmentItems).where(eq(shipmentItems.shipmentId, shipmentId));
+    const fullyReceived = updatedItems.every(i => i.receivedQty >= i.quantity);
+    const newStatus = fullyReceived ? 'arrived' : 'partially_received';
+
+    await db.update(incomingShipments)
+      .set({ status: newStatus, arrivedDate: fullyReceived ? new Date() : null, updatedAt: new Date() })
+      .where(eq(incomingShipments.id, shipmentId));
+
+    await writeAuditLog({
+      userId: req.user!.id, userEmail: req.user!.email,
+      action: 'RECEIVE', resource: 'shipment', resourceId: shipmentId,
+      details: { status: newStatus, receivedItems },
+    });
+    res.json({ success: true, status: newStatus });
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
   }
