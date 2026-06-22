@@ -47,6 +47,7 @@ router.get('/stock', async (req: AuthRequest, res) => {
         allocatedStock: inventory.allocatedStock,
         onHoldStock:    inventory.onHoldStock,
         availableStock: sql<number>`(${inventory.physicalStock} - ${inventory.reservedStock} - ${inventory.allocatedStock} - ${inventory.onHoldStock})`,
+        warehouseId:    inventory.warehouseId,
         warehouseName:  warehouses.name,
       })
       .from(products)
