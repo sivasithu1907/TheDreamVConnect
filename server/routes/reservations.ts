@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { db } from '../db/index.js';
 import { reservations, requestAttachments, products, clients, warehouses, users, inventory } from '../db/schema.js';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { requireAuth, requireRole, AuthRequest, CLIENT_ROLES, INTERNAL_ROLES } from '../middleware/auth.js';
 import { writeAuditLog } from '../lib/audit.js';
 
@@ -119,12 +119,38 @@ router.post('/', requireRole(CLIENT_ROLES), upload.array('photos', 5), async (re
     res.status(400).json({ error: 'productId and quantity are required for a stock reservation' });
     return;
   }
+  if (parsed.data.requestType === 'stock_reservation' && !parsed.data.warehouseId) {
+    res.status(400).json({ error: 'warehouseId is required for a stock reservation' });
+    return;
+  }
   if (parsed.data.requestType === 'special_request' && !parsed.data.freeText) {
     res.status(400).json({ error: 'Please describe what you need' });
     return;
   }
 
   try {
+    // For stock reservations, place the quantity on hold immediately at submission time —
+    // not after staff review. This is the key fix for a real race condition: without an
+    // immediate hold, two clients could both see the same "available" number and both submit
+    // requests for it before staff ever looks at either one. Holding on submission means the
+    // second client's available-stock view reflects the first client's pending request right away.
+    if (parsed.data.requestType === 'stock_reservation' && parsed.data.productId && parsed.data.warehouseId && parsed.data.quantity) {
+      const [inv] = await db.select().from(inventory)
+        .where(and(eq(inventory.productId, parsed.data.productId), eq(inventory.warehouseId, parsed.data.warehouseId)));
+      if (!inv) {
+        res.status(404).json({ error: 'No inventory record found for this product/warehouse' });
+        return;
+      }
+      const available = inv.physicalStock - inv.reservedStock - inv.allocatedStock - inv.onHoldStock;
+      if (parsed.data.quantity > available) {
+        res.status(409).json({ error: `Only ${available} units are currently available — someone else may have just reserved some of this stock.` });
+        return;
+      }
+      await db.update(inventory)
+        .set({ onHoldStock: inv.onHoldStock + parsed.data.quantity, updatedAt: new Date() })
+        .where(eq(inventory.id, inv.id));
+    }
+
     const [reservation] = await db.insert(reservations).values({
       clientId,
       requestedBy: req.user!.id,
@@ -200,12 +226,32 @@ router.put('/:id/review', requireRole(['super_admin', 'sales_manager', 'inventor
   try {
     const [existing] = await db.select().from(reservations).where(eq(reservations.id, id));
     if (!existing) { res.status(404).json({ error: 'Reservation not found' }); return; }
+    if (existing.status !== 'pending') {
+      res.status(409).json({ error: `This request was already ${existing.status} and can't be reviewed again.` });
+      return;
+    }
 
-    // If approving a stock reservation, move quantity into reservedStock on the inventory row
-    if (parsed.data.status === 'approved' && existing.requestType === 'stock_reservation' && existing.productId && existing.warehouseId && existing.quantity) {
-      const [inv] = await db.select().from(inventory).where(eq(inventory.productId, existing.productId));
+    // Stock for a reservation is placed on hold at submission time (see POST /).
+    // Reviewing it here either converts that hold into a firm reservation (approved),
+    // or releases it back to available stock (rejected) — either way the on-hold
+    // amount must be cleared since the request is no longer pending.
+    if (existing.requestType === 'stock_reservation' && existing.productId && existing.warehouseId && existing.quantity) {
+      const [inv] = await db.select().from(inventory)
+        .where(and(eq(inventory.productId, existing.productId), eq(inventory.warehouseId, existing.warehouseId)));
       if (inv) {
-        await db.update(inventory).set({ reservedStock: inv.reservedStock + existing.quantity, updatedAt: new Date() }).where(eq(inventory.id, inv.id));
+        if (parsed.data.status === 'approved') {
+          await db.update(inventory).set({
+            onHoldStock:   Math.max(0, inv.onHoldStock - existing.quantity),
+            reservedStock: inv.reservedStock + existing.quantity,
+            updatedAt: new Date(),
+          }).where(eq(inventory.id, inv.id));
+        } else {
+          // rejected — release the hold, nothing moves into reservedStock
+          await db.update(inventory).set({
+            onHoldStock: Math.max(0, inv.onHoldStock - existing.quantity),
+            updatedAt: new Date(),
+          }).where(eq(inventory.id, inv.id));
+        }
       }
     }
 
