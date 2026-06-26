@@ -60,7 +60,7 @@ export default function Categories() {
                   <td className="px-5 py-3" style={themeStyles.muted}>{c.description ?? '—'}</td>
                   <td className="px-5 py-3"><div className="flex gap-1 justify-end">
                     <button onClick={() => openEdit(c)} className="p-1.5 rounded-md transition-colors hover:bg-[var(--bg-subtle)]" style={themeStyles.muted}><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md transition-colors hover:bg-[#FEF2F2]" style={themeStyles.danger}><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => handleDelete(c.id)} className="p-1.5 rounded-md transition-colors hover:bg-[var(--badge-danger-bg)]" style={themeStyles.danger}><Trash2 className="h-4 w-4" /></button>
                   </div></td>
                 </tr>
               ))}
