@@ -1,18 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --bg-base:      #0a0f1e;
-  --bg-card:      rgba(255,255,255,0.04);
-  --bg-nav:       rgba(10,15,30,0.95);
-  --border:       rgba(255,255,255,0.08);
-  --border-hover: rgba(255,255,255,0.14);
-  --text-primary: #f1f5f9;
-  --text-muted:   #64748b;
-  --accent:       #3b82f6;
-  --accent-hover: #2563eb;
-  --success:      #10b981;
-  --warning:      #f59e0b;
-  --danger:       #ef4444;
+  --bg-base:      #FAFAFA;  /* Canvas bg */
+  --bg-card:      #FFFFFF;  /* Card surface */
+  --bg-subtle:    #F7F8FA;  /* Subtle fill */
+  --border:       #E5E7EB;  /* Border 1px */
+  --text-primary: #111827;  /* Primary text */
+  --text-muted:   #6B7280;  /* Body / subtitle */
+  --text-faint:   #9CA3AF;  /* Monospace token */
+  --accent:       #EB5D0B;  /* Accent orange */
+  --danger:       #DC2626;
 }
 
 html, body, #root {
@@ -25,33 +22,32 @@ html, body, #root {
 .glass-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  backdrop-filter: blur(12px);
+  border-radius: 10px;
 }
 
 .glass-nav {
-  background: var(--bg-nav);
+  background: var(--bg-card);
   border-right: 1px solid var(--border);
-  backdrop-filter: blur(20px);
 }
 
 .nav-active {
-  background: rgba(59,130,246,0.12);
-  border: 1px solid rgba(59,130,246,0.25);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
 }
 
 .table-row-hover:hover {
-  background: rgba(255,255,255,0.025);
+  background: var(--bg-subtle);
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  gap: 5px;
+  padding: 3px 11px;
   border-radius: 999px;
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
 }
 
@@ -60,9 +56,7 @@ html, body, #root {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(59,130,246,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99,102,241,0.05) 0%, transparent 60%);
+  background: var(--bg-base);
 }
 
 @keyframes fadeUp {
@@ -70,3 +64,48 @@ html, body, #root {
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-in { animation: fadeUp 0.35s ease forwards; }
+
+/* ── Button variants, per brand kit: outlined at rest, fills only on hover ── */
+.btn-primary {
+  background: #FFFFFF;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.15s, color 0.15s;
+}
+.btn-primary:hover {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.btn-primary:disabled {
+  border-color: var(--border);
+  color: #B7BCC4;
+  cursor: not-allowed;
+  background: #FFFFFF;
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  color: #374151;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.15s;
+}
+.btn-secondary:hover {
+  background: var(--bg-subtle);
+}
+
+.btn-danger {
+  background: #FFFFFF;
+  border: 1.5px solid var(--danger);
+  color: var(--danger);
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.15s, color 0.15s;
+}
+.btn-danger:hover {
+  background: var(--danger);
+  color: #FFFFFF;
+}
