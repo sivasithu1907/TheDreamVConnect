@@ -43,12 +43,12 @@ export default function PortalAccount() {
         <h2 className="text-[15px] font-bold mb-4 flex items-center gap-2" style={themeStyles.primary}><Lock className="h-4 w-4" /> Change Password</h2>
 
         {success && (
-          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg text-sm" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669' }}>
+          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg text-sm" style={{ background: 'var(--badge-success-bg)', border: '1px solid var(--badge-success-border)', color: 'var(--badge-success-text)' }}>
             <Check className="h-4 w-4 shrink-0" /> Password updated successfully.
           </div>
         )}
         {error && (
-          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg text-sm" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: 'var(--danger)' }}>
+          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg text-sm" style={{ background: 'var(--error-box-bg)', border: '1px solid var(--badge-danger-border)', color: 'var(--danger)' }}>
             <AlertCircle className="h-4 w-4 shrink-0" /> {error}
           </div>
         )}
