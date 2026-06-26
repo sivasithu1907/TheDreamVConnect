@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Package2, Pencil, Trash2, Check } from 'lucide-react';
+import { Plus, Search, Package2, Pencil, Trash2, Check, Archive } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { Modal } from '../../components/Modal';
 import { COMMON_UNITS } from '../../lib/utils';
@@ -34,15 +34,20 @@ export default function Products() {
   const [error,      setError]      = useState<string|null>(null);
   const [isCustomUnit, setIsCustomUnit] = useState(false);
   const [skuMode, setSkuMode] = useState<'auto'|'manual'>('auto');
+  const [showArchived, setShowArchived] = useState(false);
 
   const load = () => {
     setLoading(true);
-    Promise.all([get<Product[]>('/api/products'), get<Category[]>('/api/categories'), get<Brand[]>('/api/brands')])
+    Promise.all([
+      get<Product[]>(`/api/products${showArchived ? '?includeArchived=true' : ''}`),
+      get<Category[]>('/api/categories'),
+      get<Brand[]>('/api/brands'),
+    ])
       .then(([p, c, b]) => { setProducts(p); setCategories(c); setBrands(b); })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   };
-  useEffect(load, []);
+  useEffect(load, [showArchived]);
 
   // Auto-preview the next SKU whenever category/brand change, while in create mode + auto SKU mode
   useEffect(() => {
@@ -75,9 +80,28 @@ export default function Products() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Archive this product?')) return;
+    if (!confirm('Archive this product? It will be hidden from active lists but its history is kept.')) return;
     try { await del(`/api/products/${id}`); load(); }
     catch (err: unknown) { alert(err instanceof Error ? err.message : 'Delete failed'); }
+  };
+
+  const handlePermanentDelete = async (p: Product) => {
+    if (!confirm(`Permanently delete "${p.name}" (${p.sku})? This cannot be undone. It will only succeed if this product has no shipments, reservations, or stock adjustments recorded against it.`)) return;
+    try {
+      await del(`/api/products/${p.id}/permanent`);
+      load();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Permanent delete failed');
+    }
+  };
+
+  const handleRestore = async (p: Product) => {
+    try {
+      await post(`/api/products/${p.id}/restore`, {});
+      load();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Restore failed');
+    }
   };
 
   const filtered = products.filter(p =>
@@ -98,12 +122,16 @@ export default function Products() {
       </div>
 
       <div className="glass-card">
-        <div className="p-4 border-b border-white/5">
+        <div className="p-4 border-b border-white/5 flex items-center justify-between">
           <div className="relative max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or SKU…"
               className="w-full pl-9 pr-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
           </div>
+          <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
+            <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} className="rounded border-white/20 bg-white/10 text-blue-500 focus:ring-blue-500" />
+            Show archived
+          </label>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -133,8 +161,13 @@ export default function Products() {
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-1 justify-end">
-                      <button onClick={() => openEdit(p)} className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => openEdit(p)} className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors" title="Edit"><Pencil className="h-4 w-4" /></button>
+                      {p.status === 'archived' ? (
+                        <button onClick={() => handleRestore(p)} className="flex items-center gap-1 px-2 py-1 text-xs text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 rounded-md transition-colors">Restore</button>
+                      ) : (
+                        <button onClick={() => handleDelete(p.id)} className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-md transition-colors" title="Archive (keeps history, hides from active lists)"><Archive className="h-4 w-4" /></button>
+                      )}
+                      <button onClick={() => handlePermanentDelete(p)} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors" title="Permanently delete (only if no history exists)"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>
