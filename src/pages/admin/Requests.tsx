@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Inbox, Check, X, Image as ImageIcon } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
-import { formatDateTime } from '../../lib/utils';
+import { formatDateTime, themeStyles, statusBadgeStyle } from '../../lib/utils';
 import { Modal } from '../../components/Modal';
 
 interface Attachment { id: number; fileUrl: string; fileName: string; }
@@ -14,13 +14,13 @@ interface RequestRow {
   attachments: Attachment[];
 }
 
-const STATUS_COLORS: Record<string,string> = {
-  pending:           'bg-amber-500/10 text-amber-400',
-  approved:          'bg-emerald-500/10 text-emerald-400',
-  rejected:          'bg-red-500/10 text-red-400',
-  expired:           'bg-slate-500/10 text-slate-400',
-  converted_to_po:   'bg-blue-500/10 text-blue-400',
-  cancelled:         'bg-slate-500/10 text-slate-400',
+const STATUS_STYLES: Record<string, React.CSSProperties> = {
+  pending:           statusBadgeStyle('warning'),
+  approved:          statusBadgeStyle('success'),
+  rejected:          statusBadgeStyle('danger'),
+  expired:           statusBadgeStyle('muted'),
+  converted_to_po:   statusBadgeStyle('info'),
+  cancelled:         statusBadgeStyle('muted'),
 };
 
 export default function Requests() {
@@ -57,44 +57,46 @@ export default function Requests() {
     <div className="space-y-6 animate-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Client Requests</h1>
-          <p className="text-slate-400 text-sm mt-1">Stock reservations and special requests submitted through the portal.</p>
+          <h1 className="text-[28px] font-extrabold" style={themeStyles.primary}>Client Requests</h1>
+          <p className="text-[13px] mt-1" style={themeStyles.muted}>Stock reservations and special requests submitted through the portal.</p>
         </div>
-        <div className="flex gap-1 p-1 bg-white/5 rounded-lg">
-          <button onClick={() => setFilter('pending')} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${filter === 'pending' ? 'bg-blue-500 text-white' : 'text-slate-400 hover:text-white'}`}>Pending</button>
-          <button onClick={() => setFilter('all')} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${filter === 'all' ? 'bg-blue-500 text-white' : 'text-slate-400 hover:text-white'}`}>All</button>
+        <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg-subtle)' }}>
+          <button onClick={() => setFilter('pending')} className="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors"
+            style={filter === 'pending' ? { background: '#fff', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : themeStyles.muted}>Pending</button>
+          <button onClick={() => setFilter('all')} className="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors"
+            style={filter === 'all' ? { background: '#fff', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : themeStyles.muted}>All</button>
         </div>
       </div>
 
       <div className="glass-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b border-white/5">{['Client','Type','Item / Request','Qty','Status','Submitted',''].map(h => <th key={h} className="px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider text-left">{h}</th>)}</tr></thead>
-            <tbody className="divide-y divide-white/5">
-              {loading ? <tr><td colSpan={7} className="px-5 py-10 text-center text-slate-500">Loading…</td></tr>
-              : visible.length === 0 ? <tr><td colSpan={7} className="px-5 py-12 text-center"><Inbox className="h-10 w-10 text-slate-600 mx-auto mb-2" /><p className="text-slate-400">{filter === 'pending' ? 'No pending requests' : 'No requests yet'}</p></td></tr>
+            <thead><tr style={{ borderBottom: '1px solid var(--border)' }}>{['Client','Type','Item / Request','Qty','Status','Submitted',''].map(h => <th key={h} className="px-5 py-3 text-[11px] font-bold uppercase text-left" style={{ ...themeStyles.muted, letterSpacing: '0.4px' }}>{h}</th>)}</tr></thead>
+            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+              {loading ? <tr><td colSpan={7} className="px-5 py-10 text-center" style={themeStyles.faint}>Loading…</td></tr>
+              : visible.length === 0 ? <tr><td colSpan={7} className="px-5 py-12 text-center"><Inbox className="h-10 w-10 mx-auto mb-2" style={themeStyles.faint} /><p style={themeStyles.muted}>{filter === 'pending' ? 'No pending requests' : 'No requests yet'}</p></td></tr>
               : visible.map(r => (
                 <tr key={r.id} className="table-row-hover">
-                  <td className="px-5 py-3 font-medium text-white">{r.clientName}</td>
-                  <td className="px-5 py-3 text-xs text-slate-400">{r.requestType === 'stock_reservation' ? 'Reservation' : 'Special Request'}</td>
-                  <td className="px-5 py-3 text-slate-300 max-w-xs">
+                  <td className="px-5 py-3 font-semibold" style={themeStyles.primary}>{r.clientName}</td>
+                  <td className="px-5 py-3 text-xs" style={themeStyles.muted}>{r.requestType === 'stock_reservation' ? 'Reservation' : 'Special Request'}</td>
+                  <td className="px-5 py-3 max-w-xs" style={themeStyles.primary}>
                     {r.requestType === 'stock_reservation' ? (
-                      <>{r.productName} <span className="text-xs font-mono text-slate-500">{r.productSku}</span></>
+                      <>{r.productName} <span className="text-xs font-mono" style={themeStyles.faint}>{r.productSku}</span></>
                     ) : (
                       <span className="flex items-center gap-1.5">
                         <span className="truncate">{r.freeText}</span>
-                        {r.attachments.length > 0 && <ImageIcon className="h-3.5 w-3.5 text-slate-500 shrink-0" />}
+                        {r.attachments.length > 0 && <ImageIcon className="h-3.5 w-3.5 shrink-0" style={themeStyles.faint} />}
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-3 text-slate-400">{r.quantity ?? '—'}</td>
-                  <td className="px-5 py-3"><span className={`status-badge ${STATUS_COLORS[r.status] ?? ''}`}>{r.status.replace(/_/g,' ')}</span></td>
-                  <td className="px-5 py-3 text-slate-500 text-xs">{formatDateTime(r.createdAt)}</td>
+                  <td className="px-5 py-3" style={themeStyles.muted}>{r.quantity ?? '—'}</td>
+                  <td className="px-5 py-3"><span className="status-badge" style={STATUS_STYLES[r.status] ?? statusBadgeStyle('neutral')}>{r.status.replace(/_/g,' ')}</span></td>
+                  <td className="px-5 py-3 text-xs" style={themeStyles.faint}>{formatDateTime(r.createdAt)}</td>
                   <td className="px-5 py-3">
                     {r.status === 'pending' && (
                       <div className="flex gap-1 justify-end">
-                        <button onClick={() => openReview(r, 'approved')} className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-md transition-colors" title="Approve"><Check className="h-4 w-4" /></button>
-                        <button onClick={() => openReview(r, 'rejected')} className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors" title="Reject"><X className="h-4 w-4" /></button>
+                        <button onClick={() => openReview(r, 'approved')} className="p-1.5 rounded-md transition-colors hover:bg-[#ECFDF5]" style={{ color: '#059669' }} title="Approve"><Check className="h-4 w-4" /></button>
+                        <button onClick={() => openReview(r, 'rejected')} className="p-1.5 rounded-md transition-colors hover:bg-[#FEF2F2]" style={themeStyles.danger} title="Reject"><X className="h-4 w-4" /></button>
                       </div>
                     )}
                   </td>
@@ -108,34 +110,38 @@ export default function Requests() {
       <Modal open={!!reviewing} onClose={() => setReviewing(null)} title={decision === 'approved' ? 'Approve Request' : 'Reject Request'}>
         {reviewing && (
           <>
-            <div className="mb-4 p-3 bg-white/5 rounded-lg space-y-1">
-              <p className="text-sm font-medium text-white">{reviewing.clientName}</p>
+            <div className="mb-4 p-3 rounded-lg space-y-1" style={{ background: 'var(--bg-subtle)' }}>
+              <p className="text-sm font-semibold" style={themeStyles.primary}>{reviewing.clientName}</p>
               {reviewing.requestType === 'stock_reservation' ? (
-                <p className="text-xs text-slate-400">{reviewing.productName} — Qty {reviewing.quantity}</p>
+                <p className="text-xs" style={themeStyles.muted}>{reviewing.productName} — Qty {reviewing.quantity}</p>
               ) : (
-                <p className="text-xs text-slate-400">{reviewing.freeText}</p>
+                <p className="text-xs" style={themeStyles.muted}>{reviewing.freeText}</p>
               )}
               {reviewing.attachments.length > 0 && (
                 <div className="flex gap-2 pt-2">
                   {reviewing.attachments.map(a => (
                     <a key={a.id} href={a.fileUrl} target="_blank" rel="noreferrer">
-                      <img src={a.fileUrl} alt={a.fileName} className="w-14 h-14 object-cover rounded-lg border border-white/10" />
+                      <img src={a.fileUrl} alt={a.fileName} className="w-14 h-14 object-cover rounded-lg" style={{ border: '1px solid var(--border)' }} />
                     </a>
                   ))}
                 </div>
               )}
             </div>
-            {error && <p className="text-red-400 text-sm mb-4 p-3 bg-red-500/10 rounded-lg">{error}</p>}
+            {error && <p className="text-sm mb-4 p-3 rounded-lg" style={themeStyles.errorBox}>{error}</p>}
             <form onSubmit={submitReview} className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Notes {decision === 'rejected' ? '(let them know why)' : '(optional)'}</label>
-                <textarea rows={3} value={reviewNotes} onChange={e => setReviewNotes(e.target.value)} className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none" />
+                <label className="block text-xs font-medium mb-1" style={themeStyles.muted}>Notes {decision === 'rejected' ? '(let them know why)' : '(optional)'}</label>
+                <textarea rows={3} value={reviewNotes} onChange={e => setReviewNotes(e.target.value)} className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none focus:ring-2" style={themeStyles.input} />
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setReviewing(null)} className="px-4 py-2 text-sm text-slate-400 border border-white/10 rounded-lg">Cancel</button>
-                <button type="submit" disabled={saving} className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 ${decision === 'approved' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'}`}>
-                  {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
-                  {decision === 'approved' ? 'Approve' : 'Reject'}
+                <button type="button" onClick={() => setReviewing(null)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
+                <button type="submit" disabled={saving} className={decision === 'approved' ? 'btn-primary' : 'btn-danger'}
+                  style={decision === 'approved' ? { borderColor: '#059669', color: '#059669' } : undefined}
+                >
+                  <span className="flex items-center gap-2 px-4 py-2 text-sm">
+                    {saving ? <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'currentColor', borderTopColor: 'transparent' }} /> : <Check className="h-4 w-4" />}
+                    {decision === 'approved' ? 'Approve' : 'Reject'}
+                  </span>
                 </button>
               </div>
             </form>
