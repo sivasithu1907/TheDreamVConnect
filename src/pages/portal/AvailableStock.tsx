@@ -51,7 +51,7 @@ export default function AvailableStock() {
                   <td className="px-5 py-3 text-right font-mono" style={themeStyles.muted}>{item.minOrderQty}</td>
                   <td className="px-5 py-3 text-right">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-md font-mono text-sm font-semibold"
-                      style={item.availableStock > 0 ? { color: '#059669', background: '#ECFDF5' } : { color: 'var(--danger)', background: '#FEF2F2' }}>
+                      style={item.availableStock > 0 ? { color: 'var(--badge-success-text)', background: 'var(--badge-success-bg)' } : { color: 'var(--danger)', background: 'var(--error-box-bg)' }}>
                       {item.availableStock > 0 ? item.availableStock.toLocaleString() : 'Out of stock'}
                     </span>
                   </td>
