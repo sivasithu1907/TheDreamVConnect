@@ -29,7 +29,7 @@ const STATUS_COLORS: Record<string,string> = {
 interface DraftLine { productId: string; quantity: number; }
 
 export default function Shipments() {
-  const { get, post } = useApi();
+  const { get, post, put } = useApi();
   const [items, setItems]         = useState<Shipment[]>([]);
   const [products, setProducts]   = useState<Product[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -98,6 +98,19 @@ export default function Shipments() {
     finally { setSaving(false); }
   };
 
+  const [statusUpdating, setStatusUpdating] = useState<number|null>(null);
+  const handleStatusChange = async (shipmentId: number, newStatus: string) => {
+    setStatusUpdating(shipmentId);
+    try {
+      await put(`/api/shipments/${shipmentId}/status`, { status: newStatus });
+      load();
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update status');
+    } finally {
+      setStatusUpdating(null);
+    }
+  };
+
   const openDetail = async (s: Shipment) => {
     setDetailOpen(true); setReceiveError(null);
     try {
@@ -146,7 +159,22 @@ export default function Shipments() {
                   <td className="px-5 py-3 text-slate-300">{s.supplierName ?? '—'}</td>
                   <td className="px-5 py-3 text-slate-400">{formatDate(s.expectedDate)}</td>
                   <td className="px-5 py-3 text-slate-400">{formatDate(s.arrivedDate)}</td>
-                  <td className="px-5 py-3"><span className={`status-badge ${STATUS_COLORS[s.status] ?? ''}`}>{s.status.replace('_',' ')}</span></td>
+                  <td className="px-5 py-3">
+                    {(s.status === 'pending' || s.status === 'in_transit') ? (
+                      <select
+                        value={s.status}
+                        disabled={statusUpdating === s.id}
+                        onChange={e => handleStatusChange(s.id, e.target.value)}
+                        className={`status-badge border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 ${STATUS_COLORS[s.status] ?? ''}`}
+                      >
+                        <option value="pending" className="bg-slate-800 text-white">pending</option>
+                        <option value="in_transit" className="bg-slate-800 text-white">in transit</option>
+                        <option value="cancelled" className="bg-slate-800 text-white">cancelled</option>
+                      </select>
+                    ) : (
+                      <span className={`status-badge ${STATUS_COLORS[s.status] ?? ''}`}>{s.status.replace('_',' ')}</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3">
                     <button onClick={() => openDetail(s)} className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-lg transition-colors">
                       <PackageCheck className="h-3.5 w-3.5" /> {s.status === 'arrived' ? 'View' : 'Receive'}
