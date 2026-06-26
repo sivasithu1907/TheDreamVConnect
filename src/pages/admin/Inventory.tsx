@@ -60,7 +60,7 @@ export default function Inventory() {
                 <th key={i} className={`px-4 py-3 text-[11px] font-bold uppercase ${i > 1 ? 'text-right' : 'text-left'}`} style={{ ...themeStyles.muted, letterSpacing: '0.4px' }}>{h}</th>
               ))}
             </tr></thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            <tbody className="divide-y divide-[var(--border)]">
               {loading ? <tr><td colSpan={8} className="px-5 py-10 text-center" style={themeStyles.faint}>Loading…</td></tr>
               : filtered.length === 0 ? <tr><td colSpan={8} className="px-5 py-12 text-center"><Warehouse className="h-10 w-10 mx-auto mb-2" style={themeStyles.faint} /><p style={themeStyles.muted}>No inventory records</p></td></tr>
               : filtered.map(inv => (
