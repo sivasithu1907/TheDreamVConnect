@@ -50,10 +50,10 @@ export default function Dashboard() {
 
   // Neutral/informational tints only, per brand-kit rule: orange is reserved
   // for primary actions, never used decoratively across multiple stat cards at once.
-  const neutral = { background: '#F9FAFB', color: '#374151' };
-  const info    = { background: '#EFF6FF', color: '#2563EB' };
-  const success = { background: '#ECFDF5', color: '#059669' };
-  const warning = { background: '#FFFBEB', color: '#D97706' };
+  const neutral = { background: 'var(--badge-neutral-bg)', color: 'var(--badge-neutral-text)' };
+  const info    = { background: 'var(--badge-info-bg)',    color: 'var(--badge-info-text)' };
+  const success = { background: 'var(--badge-success-bg)', color: 'var(--badge-success-text)' };
+  const warning = { background: 'var(--badge-warning-bg)', color: 'var(--badge-warning-text)' };
 
   return (
     <div className="space-y-8 animate-in">
