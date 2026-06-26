@@ -3,9 +3,11 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Folders, Tags, Warehouse,
   Truck, Users, LogOut, FileText, Building2, UserCog,
-  ShoppingBag, Menu, X, ChevronRight, Inbox, MessageSquarePlus
+  ShoppingBag, Menu, X, ChevronRight, Inbox, MessageSquarePlus,
+  Moon, Sun
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { cn } from '../lib/utils';
 
 interface NavItem {
@@ -72,6 +74,7 @@ const NAV_GROUPS: NavGroup[] = [
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate  = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -132,7 +135,7 @@ export function Layout() {
       {/* User */}
       <div className="p-4" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0" style={{ background: '#FFF7ED', border: '1px solid #FED7AA', color: 'var(--accent)' }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0" style={{ background: 'var(--avatar-bg)', border: '1px solid var(--avatar-border)', color: 'var(--accent)' }}>
             {user?.name?.slice(0, 2).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
@@ -140,8 +143,16 @@ export function Layout() {
             <div className="text-xs capitalize truncate" style={{ color: 'var(--text-faint)' }}>{user?.role.replace(/_/g, ' ')}</div>
           </div>
           <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-lg transition-colors hover:bg-[var(--bg-subtle)]"
+            style={{ color: 'var(--text-faint)' }}
+            title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          >
+            {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+          <button
             onClick={handleLogout}
-            className="p-1.5 rounded-lg transition-colors hover:bg-red-50 hover:text-red-600"
+            className="p-1.5 rounded-lg transition-colors hover:bg-[var(--badge-danger-bg)] hover:text-[var(--danger)]"
             style={{ color: 'var(--text-faint)' }}
             title="Sign out"
           >
@@ -182,9 +193,14 @@ export function Layout() {
               <div className="w-6 h-6 rounded-md flex items-center justify-center font-bold text-white text-xs" style={{ background: 'var(--accent)' }}>T</div>
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>TheDreamV Connect</span>
             </div>
-            <button onClick={handleLogout} className="p-2" style={{ color: 'var(--text-muted)' }}>
-              <LogOut className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button onClick={toggleTheme} className="p-2" style={{ color: 'var(--text-muted)' }} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              </button>
+              <button onClick={handleLogout} className="p-2" style={{ color: 'var(--text-muted)' }}>
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
           </header>
 
           <div className="flex-1 p-6 max-w-7xl w-full mx-auto">
