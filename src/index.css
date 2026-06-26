@@ -1,15 +1,56 @@
 @import "tailwindcss";
 
-:root {
+:root,
+:root[data-theme="light"] {
   --bg-base:      #FAFAFA;  /* Canvas bg */
   --bg-card:      #FFFFFF;  /* Card surface */
   --bg-subtle:    #F7F8FA;  /* Subtle fill */
+  --input-bg:     #FFFFFF;  /* Form input background */
   --border:       #E5E7EB;  /* Border 1px */
   --text-primary: #111827;  /* Primary text */
   --text-muted:   #6B7280;  /* Body / subtitle */
   --text-faint:   #9CA3AF;  /* Monospace token */
   --accent:       #EB5D0B;  /* Accent orange */
   --danger:       #DC2626;
+  --btn-disabled-text: #B7BCC4;
+  --btn-secondary-border: #D1D5DB;
+  --btn-secondary-text: #374151;
+  --badge-success-bg: #ECFDF5; --badge-success-text: #059669; --badge-success-border: #A7F3D0;
+  --badge-warning-bg: #FFFBEB; --badge-warning-text: #D97706;
+  --badge-info-bg:    #EFF6FF; --badge-info-text:    #2563EB;
+  --badge-muted-bg:   #F9FAFB; --badge-muted-text:    #9CA3AF;
+  --badge-neutral-bg: #F9FAFB; --badge-neutral-text:  #374151;
+  --badge-danger-bg:  #FEF2F2; --badge-danger-text:   #DC2626; --badge-danger-border: #FECACA;
+  --error-box-bg:     #FEF2F2;
+  --avatar-bg:        #FFF7ED; --avatar-border: #FED7AA;
+  --modal-overlay:    rgba(17, 24, 39, 0.5);
+  --modal-shadow:     0 20px 40px -8px rgba(17,24,39,0.18);
+}
+
+:root[data-theme="dark"] {
+  --bg-base:      #15161A;
+  --bg-card:      #1E2025;
+  --bg-subtle:    #25272D;
+  --input-bg:     #25272D;
+  --border:       #33353C;
+  --text-primary: #F1F2F4;
+  --text-muted:   #9CA0AC;
+  --text-faint:   #6B7078;
+  --accent:       #EB5D0B;
+  --danger:       #F87171;
+  --btn-disabled-text: #5A5D66;
+  --btn-secondary-border: #3A3D45;
+  --btn-secondary-text: #D7D9DD;
+  --badge-success-bg: rgba(5,150,105,0.18);  --badge-success-text: #34D399; --badge-success-border: rgba(52,211,153,0.35);
+  --badge-warning-bg: rgba(217,119,6,0.18);  --badge-warning-text: #FBBF24;
+  --badge-info-bg:    rgba(37,99,235,0.18);  --badge-info-text:    #60A5FA;
+  --badge-muted-bg:   rgba(255,255,255,0.06); --badge-muted-text:   #8A8D96;
+  --badge-neutral-bg: rgba(255,255,255,0.06); --badge-neutral-text: #C3C5CA;
+  --badge-danger-bg:  rgba(248,113,113,0.16); --badge-danger-text:  #F87171; --badge-danger-border: rgba(248,113,113,0.35);
+  --error-box-bg:     rgba(248,113,113,0.12);
+  --avatar-bg:        rgba(235,93,11,0.15); --avatar-border: rgba(235,93,11,0.35);
+  --modal-overlay:    rgba(0, 0, 0, 0.65);
+  --modal-shadow:     0 20px 40px -8px rgba(0,0,0,0.5);
 }
 
 html, body, #root {
@@ -67,7 +108,7 @@ html, body, #root {
 
 /* ── Button variants, per brand kit: outlined at rest, fills only on hover ── */
 .btn-primary {
-  background: #FFFFFF;
+  background: var(--bg-card);
   border: 1.5px solid var(--accent);
   color: var(--accent);
   border-radius: 8px;
@@ -80,15 +121,15 @@ html, body, #root {
 }
 .btn-primary:disabled {
   border-color: var(--border);
-  color: #B7BCC4;
+  color: var(--btn-disabled-text);
   cursor: not-allowed;
-  background: #FFFFFF;
+  background: var(--bg-card);
 }
 
 .btn-secondary {
-  background: #FFFFFF;
-  border: 1px solid #D1D5DB;
-  color: #374151;
+  background: var(--bg-card);
+  border: 1px solid var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
   border-radius: 8px;
   font-weight: 600;
   transition: background-color 0.15s;
@@ -98,7 +139,7 @@ html, body, #root {
 }
 
 .btn-danger {
-  background: #FFFFFF;
+  background: var(--bg-card);
   border: 1.5px solid var(--danger);
   color: var(--danger);
   border-radius: 8px;
