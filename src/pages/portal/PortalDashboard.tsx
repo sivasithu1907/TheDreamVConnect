@@ -23,8 +23,8 @@ export function PortalDashboard() {
   const totalAvailable = stock.reduce((s, i) => s + Math.max(0, i.availableStock), 0);
   const inStockCount   = stock.filter(i => i.availableStock > 0).length;
 
-  const info    = { background: '#EFF6FF', color: '#2563EB' };
-  const success = { background: '#ECFDF5', color: '#059669' };
+  const info    = { background: 'var(--badge-info-bg)',    color: 'var(--badge-info-text)' };
+  const success = { background: 'var(--badge-success-bg)', color: 'var(--badge-success-text)' };
 
   return (
     <div className="space-y-8 animate-in">
@@ -65,7 +65,7 @@ export function PortalDashboard() {
                     <td className="px-5 py-3" style={themeStyles.muted}>{item.unit}</td>
                     <td className="px-5 py-3 text-right font-mono" style={themeStyles.muted}>{item.minOrderQty}</td>
                     <td className="px-5 py-3 text-right">
-                      <span className="font-mono font-semibold" style={{ color: item.availableStock > 0 ? '#059669' : 'var(--danger)' }}>
+                      <span className="font-mono font-semibold" style={{ color: item.availableStock > 0 ? 'var(--badge-success-text)' : 'var(--danger)' }}>
                         {item.availableStock > 0 ? item.availableStock.toLocaleString() : 'Out of stock'}
                       </span>
                     </td>
