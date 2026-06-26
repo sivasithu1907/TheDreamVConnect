@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Package, Building2, Warehouse, Truck, TrendingDown, TrendingUp } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
+import { themeStyles } from '../../lib/utils';
 
 interface Stats {
   totalProducts:     number;
@@ -11,18 +12,18 @@ interface Stats {
   incomingShipments: number;
 }
 
-function StatCard({ label, value, icon: Icon, accent, sub }: {
-  label: string; value: number; icon: React.ElementType; accent: string; sub?: string;
+function StatCard({ label, value, icon: Icon, iconStyle, sub }: {
+  label: string; value: number; icon: React.ElementType; iconStyle: React.CSSProperties; sub?: string;
 }) {
   return (
     <div className="glass-card p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-2">{label}</p>
-          <p className="text-3xl font-bold text-white">{value.toLocaleString()}</p>
-          {sub && <p className="text-xs text-slate-500 mt-1">{sub}</p>}
+          <p className="text-xs uppercase tracking-wider font-bold mb-2" style={themeStyles.muted}>{label}</p>
+          <p className="text-3xl font-extrabold" style={themeStyles.primary}>{value.toLocaleString()}</p>
+          {sub && <p className="text-xs mt-1" style={themeStyles.faint}>{sub}</p>}
         </div>
-        <div className={`p-2.5 rounded-xl ${accent}`}>
+        <div className="p-2.5 rounded-xl" style={iconStyle}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -43,24 +44,31 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-slate-400 py-12 text-center">Loading dashboard…</div>;
-  if (error)   return <div className="text-red-400 py-12 text-center">{error}</div>;
+  if (loading) return <div className="py-12 text-center" style={themeStyles.muted}>Loading dashboard…</div>;
+  if (error)   return <div className="py-12 text-center" style={themeStyles.danger}>{error}</div>;
   if (!stats)  return null;
+
+  // Neutral/informational tints only, per brand-kit rule: orange is reserved
+  // for primary actions, never used decoratively across multiple stat cards at once.
+  const neutral = { background: '#F9FAFB', color: '#374151' };
+  const info    = { background: '#EFF6FF', color: '#2563EB' };
+  const success = { background: '#ECFDF5', color: '#059669' };
+  const warning = { background: '#FFFBEB', color: '#D97706' };
 
   return (
     <div className="space-y-8 animate-in">
       <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-slate-400 text-sm mt-1">Real-time overview of distribution operations.</p>
+        <h1 className="text-[28px] font-extrabold" style={themeStyles.primary}>Dashboard</h1>
+        <p className="text-[13px] mt-1" style={themeStyles.muted}>Real-time overview of distribution operations.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Total Products"     value={stats.totalProducts}     icon={Package}    accent="bg-blue-500/15 text-blue-400"    sub="Active in catalog" />
-        <StatCard label="Active Clients"     value={stats.totalClients}      icon={Building2}  accent="bg-purple-500/15 text-purple-400" sub="Registered businesses" />
-        <StatCard label="Available Stock"    value={stats.totalAvailable}    icon={Warehouse}  accent="bg-emerald-500/15 text-emerald-400" sub={`${stats.totalPhysical.toLocaleString()} physical`} />
-        <StatCard label="Reserved Stock"     value={stats.totalReserved}     icon={TrendingDown} accent="bg-amber-500/15 text-amber-400" sub="Pending fulfillment" />
-        <StatCard label="Incoming Shipments" value={stats.incomingShipments} icon={Truck}      accent="bg-sky-500/15 text-sky-400"       sub="In transit" />
-        <StatCard label="Physical Stock"     value={stats.totalPhysical}     icon={TrendingUp} accent="bg-slate-500/15 text-slate-400"   sub="All warehouses" />
+        <StatCard label="Total Products"     value={stats.totalProducts}     icon={Package}      iconStyle={info}    sub="Active in catalog" />
+        <StatCard label="Active Clients"     value={stats.totalClients}      icon={Building2}    iconStyle={info}    sub="Registered businesses" />
+        <StatCard label="Available Stock"    value={stats.totalAvailable}    icon={Warehouse}    iconStyle={success} sub={`${stats.totalPhysical.toLocaleString()} physical`} />
+        <StatCard label="Reserved Stock"     value={stats.totalReserved}     icon={TrendingDown} iconStyle={warning} sub="Pending fulfillment" />
+        <StatCard label="Incoming Shipments" value={stats.incomingShipments} icon={Truck}         iconStyle={info}    sub="In transit" />
+        <StatCard label="Physical Stock"     value={stats.totalPhysical}     icon={TrendingUp}    iconStyle={neutral} sub="All warehouses" />
       </div>
     </div>
   );
