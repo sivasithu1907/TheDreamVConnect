@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/index.js';
 import { inventory, products, warehouses, inventoryAdjustments } from '../db/schema.js';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, isNull } from 'drizzle-orm';
 import { requireAuth, requireRole, AuthRequest, INTERNAL_ROLES } from '../middleware/auth.js';
 import { writeAuditLog } from '../lib/audit.js';
 
@@ -38,7 +38,10 @@ router.get('/', requireRole(INTERNAL_ROLES), async (_req, res) => {
       })
       .from(inventory)
       .innerJoin(products, eq(inventory.productId, products.id))
-      .innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id));
+      .innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id))
+      // Archived/soft-deleted products were previously still showing up here forever —
+      // this view should only reflect products that are still part of the active catalog.
+      .where(isNull(products.deletedAt));
     res.json(rows);
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
