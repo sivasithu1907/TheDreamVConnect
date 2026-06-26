@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle, Lock } from 'lucide-react';
+import { themeStyles } from '../lib/utils';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -34,25 +35,25 @@ export default function Login() {
       <div className="relative z-10 w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-blue-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4">
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background: 'var(--accent)' }}>
             <span className="text-white font-bold text-xl">T</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">TheDreamV Connect</h1>
-          <p className="text-slate-400 text-sm mt-1">B2B Distribution Portal</p>
+          <h1 className="text-2xl font-bold" style={themeStyles.primary}>TheDreamV Connect</h1>
+          <p className="text-sm mt-1" style={themeStyles.muted}>B2B Distribution Portal</p>
         </div>
 
         {/* Card */}
-        <div className="glass-card p-6">
+        <div className="glass-card p-6" style={{ boxShadow: '0 8px 24px -8px rgba(17,24,39,0.08)' }}>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+              <div className="flex items-start gap-2.5 p-3 rounded-lg text-sm" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: 'var(--danger)' }}>
                 <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={themeStyles.muted}>
                 Email Address
               </label>
               <input
@@ -61,13 +62,14 @@ export default function Login() {
                 onChange={e => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full px-3 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                className="w-full px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:ring-2 transition-all"
+                style={themeStyles.input}
                 placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">
+              <label className="block text-xs font-bold mb-1.5 uppercase tracking-wider" style={themeStyles.muted}>
                 Password
               </label>
               <div className="relative">
@@ -77,26 +79,24 @@ export default function Login() {
                   onChange={e => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full px-3 py-2.5 pr-10 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm focus:outline-none focus:ring-2 transition-all"
+                  style={themeStyles.input}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={themeStyles.faint}
                 >
                   {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 mt-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
-            >
+            <button type="submit" disabled={loading} className="btn-primary w-full py-2.5 mt-2 text-sm flex items-center justify-center gap-2">
               {loading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} />
               ) : (
                 <><Lock className="h-4 w-4" /> Sign In</>
               )}
@@ -104,7 +104,7 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-slate-600 mt-4">
+        <p className="text-center text-xs mt-4" style={themeStyles.faint}>
           Access restricted to authorized personnel only.
         </p>
       </div>
