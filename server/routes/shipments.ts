@@ -135,6 +135,7 @@ router.put('/:id/status', requireRole(['super_admin', 'inventory_manager']), asy
   const { status } = z.object({ status: z.enum(['pending','in_transit','arrived','partially_received','cancelled']) }).parse(req.body);
   try {
     const [updated] = await db.update(incomingShipments).set({ status, updatedAt: new Date() }).where(eq(incomingShipments.id, id)).returning();
+    await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'UPDATE_STATUS', resource: 'shipment', resourceId: id, details: { status } });
     res.json(updated);
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
