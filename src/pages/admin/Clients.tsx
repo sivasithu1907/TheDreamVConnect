@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plus, Pencil, Building2, Check, Users as UsersIcon, X } from 'lucide-react';
 import { Modal } from '../../components/Modal';
 import { useApi } from '../../hooks/useApi';
-import { PAYMENT_TERMS_OPTIONS } from '../../lib/utils';
+import { PAYMENT_TERMS_OPTIONS, themeStyles } from '../../lib/utils';
 
 interface Client {
   id: number; companyName: string; contactPerson: string; email: string;
@@ -12,8 +12,6 @@ interface Client {
 interface Category { id: number; name: string; }
 
 const empty = { companyName:'', contactPerson:'', email:'', phone:'', address:'', taxNumber:'', paymentTerms:'', notes:'' };
-
-const inputStyle = { background: '#fff', border: '1px solid var(--border)', color: 'var(--text-primary)' };
 
 export default function Clients() {
   const { get, post, put } = useApi();
@@ -90,9 +88,9 @@ export default function Clients() {
 
       {/* Just-created banner with shortcut to add a user */}
       {justCreated && (
-        <div className="glass-card p-4 flex items-center justify-between" style={{ borderColor: '#A7F3D0', background: '#ECFDF5' }}>
+        <div className="glass-card p-4 flex items-center justify-between" style={{ borderColor: 'var(--badge-success-border)', background: 'var(--badge-success-bg)' }}>
           <div>
-            <p className="text-sm font-semibold" style={{ color: '#059669' }}>{justCreated.companyName} created successfully.</p>
+            <p className="text-sm font-semibold" style={{ color: 'var(--badge-success-text)' }}>{justCreated.companyName} created successfully.</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Want to set up a login for them now?</p>
           </div>
           <div className="flex items-center gap-2">
@@ -128,8 +126,8 @@ export default function Clients() {
                   <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{c.phone ?? '—'}</td>
                   <td className="px-5 py-3">
                     <span className="status-badge" style={c.status === 'active'
-                      ? { background: '#ECFDF5', color: '#059669' }
-                      : { background: '#F9FAFB', color: '#374151' }}>
+                      ? { background: 'var(--badge-success-bg)', color: 'var(--badge-success-text)' }
+                      : { background: 'var(--badge-neutral-bg)', color: 'var(--badge-neutral-text)' }}>
                       {c.status}
                     </span>
                   </td>
@@ -152,46 +150,46 @@ export default function Clients() {
           {editing && <span className="ml-2 text-xs font-mono" style={{ color: 'var(--text-faint)' }}>#{editing.id}</span>}
         </>
       }>
-        {error && <p className="text-sm mb-4 p-3 rounded-lg" style={{ color: 'var(--danger)', background: '#FEF2F2' }}>{error}</p>}
+        {error && <p className="text-sm mb-4 p-3 rounded-lg" style={{ color: 'var(--danger)', background: 'var(--error-box-bg)' }}>{error}</p>}
         <form onSubmit={handleSave} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Company Name *</label>
-              <input required value={form.companyName} onChange={e => setForm(f => ({...f, companyName: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle} />
+              <input required value={form.companyName} onChange={e => setForm(f => ({...f, companyName: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Contact Person *</label>
-              <input required value={form.contactPerson} onChange={e => setForm(f => ({...f, contactPerson: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle} />
+              <input required value={form.contactPerson} onChange={e => setForm(f => ({...f, contactPerson: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Mobile Number *</label>
-              <input required value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle} />
+              <input required value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Email *</label>
-              <input required type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle} />
+              <input required type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Address</label>
-            <input value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle} />
+            <input value={form.address} onChange={e => setForm(f => ({...f, address: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Tax Number</label>
-              <input value={form.taxNumber} onChange={e => setForm(f => ({...f, taxNumber: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle} />
+              <input value={form.taxNumber} onChange={e => setForm(f => ({...f, taxNumber: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
             </div>
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Payment Terms</label>
               {isCustomTerms ? (
                 <div className="flex gap-1.5">
-                  <input autoFocus value={form.paymentTerms} onChange={e => setForm(f => ({...f, paymentTerms: e.target.value}))} placeholder="Custom terms" className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle} />
+                  <input autoFocus value={form.paymentTerms} onChange={e => setForm(f => ({...f, paymentTerms: e.target.value}))} placeholder="Custom terms" className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
                   <button type="button" onClick={() => { setIsCustomTerms(false); setForm(f => ({...f, paymentTerms: ''})); }} className="btn-secondary px-2 text-xs shrink-0">List</button>
                 </div>
               ) : (
-                <select value={form.paymentTerms} onChange={e => { if (e.target.value === 'Custom') { setIsCustomTerms(true); setForm(f => ({...f, paymentTerms: ''})); } else { setForm(f => ({...f, paymentTerms: e.target.value})); } }} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={inputStyle}>
+                <select value={form.paymentTerms} onChange={e => { if (e.target.value === 'Custom') { setIsCustomTerms(true); setForm(f => ({...f, paymentTerms: ''})); } else { setForm(f => ({...f, paymentTerms: e.target.value})); } }} className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input}>
                   <option value="">— Select —</option>
                   {PAYMENT_TERMS_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
@@ -200,7 +198,7 @@ export default function Clients() {
           </div>
           <div>
             <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>Notes</label>
-            <textarea rows={2} value={form.notes} onChange={e => setForm(f => ({...f, notes: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none focus:ring-2" style={inputStyle} />
+            <textarea rows={2} value={form.notes} onChange={e => setForm(f => ({...f, notes: e.target.value}))} className="w-full px-3 py-2 rounded-lg text-sm resize-none focus:outline-none focus:ring-2" style={themeStyles.input} />
           </div>
 
           {/* Category access checkboxes */}
