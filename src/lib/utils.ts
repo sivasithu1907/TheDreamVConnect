@@ -30,26 +30,29 @@ export const COMMON_UNITS = ['pcs', 'box', 'carton', 'kg', 'liter', 'set', 'pack
 
 export const PAYMENT_TERMS_OPTIONS = ['Immediate Payment', '7 Days', '21 Days', '30 Days', 'Custom'];
 
-// ── Shared inline style objects for the light institutional theme ──────────────
+// ── Shared inline style objects, theme-aware via CSS variables ─────────────────
 // Used across pages so every input/label/table looks identical without
-// repeating the same style object literally everywhere.
+// repeating the same style object literally everywhere. Every value here
+// references a CSS variable (defined per-theme in index.css) rather than a
+// literal hex — that's what lets these automatically follow the active
+// light/dark theme without each page needing to know which theme is active.
 export const themeStyles = {
-  input: { background: '#fff', border: '1px solid var(--border)', color: 'var(--text-primary)' } as CSSProperties,
+  input: { background: 'var(--input-bg)', border: '1px solid var(--border)', color: 'var(--text-primary)' } as CSSProperties,
   label: { color: 'var(--text-muted)' } as CSSProperties,
   muted: { color: 'var(--text-muted)' } as CSSProperties,
   faint: { color: 'var(--text-faint)' } as CSSProperties,
   primary: { color: 'var(--text-primary)' } as CSSProperties,
   danger: { color: 'var(--danger)' } as CSSProperties,
-  errorBox: { color: 'var(--danger)', background: '#FEF2F2' } as CSSProperties,
+  errorBox: { color: 'var(--danger)', background: 'var(--error-box-bg)' } as CSSProperties,
 };
 
 export function statusBadgeStyle(kind: 'success' | 'warning' | 'neutral' | 'info' | 'muted' | 'danger'): CSSProperties {
   switch (kind) {
-    case 'success': return { background: '#ECFDF5', color: '#059669' };
-    case 'warning': return { background: '#FFFBEB', color: '#D97706' };
-    case 'neutral':  return { background: '#F9FAFB', color: '#374151' };
-    case 'info':     return { background: '#EFF6FF', color: '#2563EB' };
-    case 'muted':    return { background: '#F9FAFB', color: '#9CA3AF' };
-    case 'danger':   return { background: '#FEF2F2', color: '#DC2626' };
+    case 'success': return { background: 'var(--badge-success-bg)', color: 'var(--badge-success-text)' };
+    case 'warning': return { background: 'var(--badge-warning-bg)', color: 'var(--badge-warning-text)' };
+    case 'neutral':  return { background: 'var(--badge-neutral-bg)', color: 'var(--badge-neutral-text)' };
+    case 'info':     return { background: 'var(--badge-info-bg)',    color: 'var(--badge-info-text)' };
+    case 'muted':    return { background: 'var(--badge-muted-bg)',   color: 'var(--badge-muted-text)' };
+    case 'danger':   return { background: 'var(--badge-danger-bg)',  color: 'var(--badge-danger-text)' };
   }
 }
