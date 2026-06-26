@@ -39,7 +39,7 @@ export default function AvailableStock() {
             <thead><tr style={{ borderBottom: '1px solid var(--border)' }}>
               {['Product','SKU','Description','Unit','Min Qty','Available'].map((h,i) => <th key={h} className={`px-5 py-3 text-[11px] font-bold uppercase ${i > 3 ? 'text-right' : 'text-left'}`} style={{ ...themeStyles.muted, letterSpacing: '0.4px' }}>{h}</th>)}
             </tr></thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            <tbody className="divide-y divide-[var(--border)]">
               {loading ? <tr><td colSpan={6} className="px-5 py-10 text-center" style={themeStyles.faint}>Loading…</td></tr>
               : filtered.length === 0 ? <tr><td colSpan={6} className="px-5 py-12 text-center"><Package2 className="h-10 w-10 mx-auto mb-2" style={themeStyles.faint} /><p style={themeStyles.muted}>No products found</p></td></tr>
               : filtered.map(item => (
