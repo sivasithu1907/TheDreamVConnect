@@ -141,7 +141,7 @@ export default function Products() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            <tbody className="divide-y divide-[var(--border)]">
               {loading ? (
                 <tr><td colSpan={6} className="px-5 py-10 text-center" style={themeStyles.faint}>Loading…</td></tr>
               ) : filtered.length === 0 ? (
