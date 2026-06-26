@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Lock, Check, AlertCircle } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 import { useAuth } from '../../context/AuthContext';
+import { themeStyles } from '../../lib/utils';
 
 export default function PortalAccount() {
   const { post } = useApi();
@@ -34,40 +35,40 @@ export default function PortalAccount() {
   return (
     <div className="space-y-6 animate-in max-w-md">
       <div>
-        <h1 className="text-2xl font-bold text-white">My Account</h1>
-        <p className="text-slate-400 text-sm mt-1">{user?.name} · {user?.email}</p>
+        <h1 className="text-[28px] font-extrabold" style={themeStyles.primary}>My Account</h1>
+        <p className="text-[13px] mt-1" style={themeStyles.muted}>{user?.name} · {user?.email}</p>
       </div>
 
       <div className="glass-card p-6">
-        <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2"><Lock className="h-4 w-4" /> Change Password</h2>
+        <h2 className="text-[15px] font-bold mb-4 flex items-center gap-2" style={themeStyles.primary}><Lock className="h-4 w-4" /> Change Password</h2>
 
         {success && (
-          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg text-sm" style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#059669' }}>
             <Check className="h-4 w-4 shrink-0" /> Password updated successfully.
           </div>
         )}
         {error && (
-          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="flex items-center gap-2 p-3 mb-4 rounded-lg text-sm" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: 'var(--danger)' }}>
             <AlertCircle className="h-4 w-4 shrink-0" /> {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Current Password</label>
-            <input required type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} autoComplete="current-password" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            <label className="block text-xs font-medium mb-1" style={themeStyles.muted}>Current Password</label>
+            <input required type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} autoComplete="current-password" className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">New Password</label>
-            <input required type="password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
-            <p className="text-xs text-slate-500 mt-1">Minimum 8 characters</p>
+            <label className="block text-xs font-medium mb-1" style={themeStyles.muted}>New Password</label>
+            <input required type="password" minLength={8} value={newPassword} onChange={e => setNewPassword(e.target.value)} autoComplete="new-password" className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
+            <p className="text-xs mt-1" style={themeStyles.faint}>Minimum 8 characters</p>
           </div>
           <div>
-            <label className="block text-xs text-slate-400 mb-1">Confirm New Password</label>
-            <input required type="password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            <label className="block text-xs font-medium mb-1" style={themeStyles.muted}>Confirm New Password</label>
+            <input required type="password" minLength={8} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} autoComplete="new-password" className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:ring-2" style={themeStyles.input} />
           </div>
-          <button type="submit" disabled={saving} className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg disabled:opacity-50 transition-colors">
-            {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="h-4 w-4" />}
+          <button type="submit" disabled={saving} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5 text-sm">
+            {saving ? <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--accent)', borderTopColor: 'transparent' }} /> : <Check className="h-4 w-4" />}
             Update Password
           </button>
         </form>
