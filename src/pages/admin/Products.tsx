@@ -162,11 +162,11 @@ export default function Products() {
                     <div className="flex items-center gap-1 justify-end">
                       <button onClick={() => openEdit(p)} className="p-1.5 rounded-md transition-colors hover:bg-[var(--bg-subtle)]" style={themeStyles.muted} title="Edit"><Pencil className="h-4 w-4" /></button>
                       {p.status === 'archived' ? (
-                        <button onClick={() => handleRestore(p)} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors" style={{ color: '#059669', border: '1px solid #A7F3D0' }}>Restore</button>
+                        <button onClick={() => handleRestore(p)} className="flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors" style={{ color: 'var(--badge-success-text)', border: '1px solid var(--badge-success-border)' }}>Restore</button>
                       ) : (
-                        <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md transition-colors hover:bg-[#FFFBEB]" style={{ color: '#D97706' }} title="Archive (keeps history, hides from active lists)"><Archive className="h-4 w-4" /></button>
+                        <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-md transition-colors hover:bg-[var(--badge-warning-bg)]" style={{ color: 'var(--badge-warning-text)' }} title="Archive (keeps history, hides from active lists)"><Archive className="h-4 w-4" /></button>
                       )}
-                      <button onClick={() => handlePermanentDelete(p)} className="p-1.5 rounded-md transition-colors hover:bg-[#FEF2F2]" style={themeStyles.danger} title="Permanently delete (only if no history exists)"><Trash2 className="h-4 w-4" /></button>
+                      <button onClick={() => handlePermanentDelete(p)} className="p-1.5 rounded-md transition-colors hover:bg-[var(--badge-danger-bg)]" style={themeStyles.danger} title="Permanently delete (only if no history exists)"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   </td>
                 </tr>
