@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/index.js';
-import { products, inventory, warehouses, categories, brands } from '../db/schema.js';
+import { products, inventory, warehouses, categories, brands, shipmentItems, reservations, inventoryAdjustments } from '../db/schema.js';
 import { eq, isNull, and, like, desc } from 'drizzle-orm';
 import { requireAuth, requireRole, AuthRequest, ADMIN_ROLES, INTERNAL_ROLES } from '../middleware/auth.js';
 import { writeAuditLog } from '../lib/audit.js';
@@ -64,12 +64,13 @@ async function generateSku(categoryId: number | null | undefined, brandId: numbe
 }
 
 // GET /api/products — internal only (no client filtering here, see portal route)
-router.get('/', requireRole(INTERNAL_ROLES), async (_req, res) => {
+router.get('/', requireRole(INTERNAL_ROLES), async (req: AuthRequest, res) => {
   try {
+    const includeArchived = req.query.includeArchived === 'true';
     const all = await db
       .select()
       .from(products)
-      .where(isNull(products.deletedAt));
+      .where(includeArchived ? undefined : isNull(products.deletedAt));
     res.json(all);
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
@@ -157,12 +158,71 @@ router.put('/:id', requireRole(['super_admin', 'inventory_manager']), async (req
   }
 });
 
-// DELETE /api/products/:id — soft delete
+// POST /api/products/:id/restore — bring an archived product back to active
+router.post('/:id/restore', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const [updated] = await db.update(products)
+      .set({ deletedAt: null, status: 'active', updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+    if (!updated) { res.status(404).json({ error: 'Product not found' }); return; }
+    await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'RESTORE', resource: 'product', resourceId: id });
+    res.json(updated);
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
+  }
+});
+
+// DELETE /api/products/:id — soft delete (archive)
 router.delete('/:id', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
   const id = parseInt(req.params.id);
   try {
     await db.update(products).set({ deletedAt: new Date(), status: 'archived' }).where(eq(products.id, id));
     await writeAuditLog({ userId: req.user!.id, userEmail: req.user!.email, action: 'DELETE', resource: 'product', resourceId: id });
+    res.json({ success: true });
+  } catch (err: unknown) {
+    res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
+  }
+});
+
+// DELETE /api/products/:id/permanent — true hard delete, only allowed when the product
+// has no real transaction history. This exists for genuine mistakes/duplicates created
+// in error — anything that's actually been received, reserved, or adjusted should be
+// archived instead (the endpoint above), never hard-deleted, since that would silently
+// erase real audit/inventory history tied to past shipments or client requests.
+router.delete('/:id/permanent', requireRole(ADMIN_ROLES), async (req: AuthRequest, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    if (!product) { res.status(404).json({ error: 'Product not found' }); return; }
+
+    const [shipmentRef]    = await db.select({ id: shipmentItems.id }).from(shipmentItems).where(eq(shipmentItems.productId, id)).limit(1);
+    const [reservationRef] = await db.select({ id: reservations.id }).from(reservations).where(eq(reservations.productId, id)).limit(1);
+
+    const invRows = await db.select({ id: inventory.id }).from(inventory).where(eq(inventory.productId, id));
+    let adjustmentRef: { id: number } | undefined;
+    for (const inv of invRows) {
+      const [adj] = await db.select({ id: inventoryAdjustments.id }).from(inventoryAdjustments).where(eq(inventoryAdjustments.inventoryId, inv.id)).limit(1);
+      if (adj) { adjustmentRef = adj; break; }
+    }
+
+    if (shipmentRef || reservationRef || adjustmentRef) {
+      res.status(409).json({
+        error: 'This product has real transaction history (a shipment line, a client reservation, or a stock adjustment) and can\'t be permanently deleted. Use Archive instead to remove it from active lists while keeping that history intact.',
+      });
+      return;
+    }
+
+    // Safe to fully remove — delete inventory rows first (no cascade defined on that FK), then the product itself.
+    await db.delete(inventory).where(eq(inventory.productId, id));
+    await db.delete(products).where(eq(products.id, id));
+
+    await writeAuditLog({
+      userId: req.user!.id, userEmail: req.user!.email,
+      action: 'PERMANENT_DELETE', resource: 'product', resourceId: id,
+      details: { name: product.name, sku: product.sku },
+    });
     res.json({ success: true });
   } catch (err: unknown) {
     res.status(500).json({ error: err instanceof Error ? err.message : 'Error' });
