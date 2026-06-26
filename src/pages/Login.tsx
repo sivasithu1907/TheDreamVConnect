@@ -43,10 +43,10 @@ export default function Login() {
         </div>
 
         {/* Card */}
-        <div className="glass-card p-6" style={{ boxShadow: '0 8px 24px -8px rgba(17,24,39,0.08)' }}>
+        <div className="glass-card p-6" style={{ boxShadow: 'var(--modal-shadow)' }}>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="flex items-start gap-2.5 p-3 rounded-lg text-sm" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: 'var(--danger)' }}>
+              <div className="flex items-start gap-2.5 p-3 rounded-lg text-sm" style={{ background: 'var(--error-box-bg)', border: '1px solid var(--badge-danger-border)', color: 'var(--danger)' }}>
                 <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
