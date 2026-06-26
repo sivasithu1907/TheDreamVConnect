@@ -140,7 +140,7 @@ export default function Shipments() {
             <thead><tr style={{ borderBottom: '1px solid var(--border)' }}>
               {['Reference','Supplier','Expected','Arrived','Status',''].map(h => <th key={h} className="px-5 py-3 text-[11px] font-bold uppercase text-left" style={{ ...themeStyles.muted, letterSpacing: '0.4px' }}>{h}</th>)}
             </tr></thead>
-            <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+            <tbody className="divide-y divide-[var(--border)]">
               {loading ? <tr><td colSpan={6} className="px-5 py-10 text-center" style={themeStyles.faint}>Loading…</td></tr>
               : items.length === 0 ? <tr><td colSpan={6} className="px-5 py-12 text-center"><Truck className="h-10 w-10 mx-auto mb-2" style={themeStyles.faint} /><p style={themeStyles.muted}>No shipments yet</p></td></tr>
               : items.map(s => (
@@ -259,7 +259,7 @@ export default function Shipments() {
                   <thead><tr style={{ background: 'var(--bg-subtle)' }}>
                     {['Product','Ordered','Already Received','Receiving Now'].map(h => <th key={h} className="px-3 py-2 text-[11px] font-bold uppercase text-left" style={{ ...themeStyles.muted, letterSpacing: '0.4px' }}>{h}</th>)}
                   </tr></thead>
-                  <tbody className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                  <tbody className="divide-y divide-[var(--border)]">
                     {detail.items.map(item => (
                       <tr key={item.id}>
                         <td className="px-3 py-2"><div style={themeStyles.primary}>{item.productName}</div><div className="text-xs font-mono" style={themeStyles.faint}>{item.productSku}</div></td>
