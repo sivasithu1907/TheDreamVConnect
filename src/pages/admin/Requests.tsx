@@ -62,9 +62,9 @@ export default function Requests() {
         </div>
         <div className="flex gap-1 p-1 rounded-lg" style={{ background: 'var(--bg-subtle)' }}>
           <button onClick={() => setFilter('pending')} className="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors"
-            style={filter === 'pending' ? { background: '#fff', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : themeStyles.muted}>Pending</button>
+            style={filter === 'pending' ? { background: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : themeStyles.muted}>Pending</button>
           <button onClick={() => setFilter('all')} className="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors"
-            style={filter === 'all' ? { background: '#fff', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : themeStyles.muted}>All</button>
+            style={filter === 'all' ? { background: 'var(--bg-card)', color: 'var(--text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.06)' } : themeStyles.muted}>All</button>
         </div>
       </div>
 
@@ -95,8 +95,8 @@ export default function Requests() {
                   <td className="px-5 py-3">
                     {r.status === 'pending' && (
                       <div className="flex gap-1 justify-end">
-                        <button onClick={() => openReview(r, 'approved')} className="p-1.5 rounded-md transition-colors hover:bg-[#ECFDF5]" style={{ color: '#059669' }} title="Approve"><Check className="h-4 w-4" /></button>
-                        <button onClick={() => openReview(r, 'rejected')} className="p-1.5 rounded-md transition-colors hover:bg-[#FEF2F2]" style={themeStyles.danger} title="Reject"><X className="h-4 w-4" /></button>
+                        <button onClick={() => openReview(r, 'approved')} className="p-1.5 rounded-md transition-colors hover:bg-[var(--badge-success-bg)]" style={{ color: 'var(--badge-success-text)' }} title="Approve"><Check className="h-4 w-4" /></button>
+                        <button onClick={() => openReview(r, 'rejected')} className="p-1.5 rounded-md transition-colors hover:bg-[var(--badge-danger-bg)]" style={themeStyles.danger} title="Reject"><X className="h-4 w-4" /></button>
                       </div>
                     )}
                   </td>
@@ -136,7 +136,7 @@ export default function Requests() {
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setReviewing(null)} className="btn-secondary px-4 py-2 text-sm">Cancel</button>
                 <button type="submit" disabled={saving} className={decision === 'approved' ? 'btn-primary' : 'btn-danger'}
-                  style={decision === 'approved' ? { borderColor: '#059669', color: '#059669' } : undefined}
+                  style={decision === 'approved' ? { borderColor: 'var(--badge-success-text)', color: 'var(--badge-success-text)' } : undefined}
                 >
                   <span className="flex items-center gap-2 px-4 py-2 text-sm">
                     {saving ? <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: 'currentColor', borderTopColor: 'transparent' }} /> : <Check className="h-4 w-4" />}
