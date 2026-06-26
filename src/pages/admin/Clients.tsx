@@ -113,7 +113,7 @@ export default function Clients() {
                 <th key={h} className="px-5 py-3 text-[11px] font-bold uppercase text-left" style={{ color: 'var(--text-muted)', letterSpacing: '0.4px' }}>{h}</th>
               ))}
             </tr></thead>
-            <tbody style={{ borderColor: 'var(--border)' }} className="divide-y" >
+            <tbody className="divide-y divide-[var(--border)]">
               {loading ? <tr><td colSpan={7} className="px-5 py-10 text-center" style={{ color: 'var(--text-faint)' }}>Loading…</td></tr>
               : items.length === 0 ? <tr><td colSpan={7} className="px-5 py-12 text-center">
                   <Building2 className="h-10 w-10 mx-auto mb-2" style={{ color: 'var(--text-faint)' }} />
