@@ -68,10 +68,10 @@ export default function Inventory() {
                   <td className="px-4 py-3"><div className="font-semibold" style={themeStyles.primary}>{inv.productName}</div><div className="text-xs font-mono" style={themeStyles.faint}>{inv.productSku}</div></td>
                   <td className="px-4 py-3 text-xs" style={themeStyles.muted}>{inv.warehouseName}</td>
                   <td className="px-4 py-3 text-right font-mono" style={themeStyles.primary}>{inv.physicalStock}</td>
-                  <td className="px-4 py-3 text-right font-mono" style={{ color: '#D97706' }}>{inv.reservedStock}</td>
+                  <td className="px-4 py-3 text-right font-mono" style={{ color: 'var(--badge-warning-text)' }}>{inv.reservedStock}</td>
                   <td className="px-4 py-3 text-right font-mono" style={{ color: 'var(--danger)' }}>{inv.onHoldStock}</td>
                   <td className="px-4 py-3 text-right">
-                    <span className="font-mono font-semibold" style={{ color: inv.availableStock > 0 ? '#059669' : 'var(--danger)' }}>{inv.availableStock}</span>
+                    <span className="font-mono font-semibold" style={{ color: inv.availableStock > 0 ? 'var(--badge-success-text)' : 'var(--danger)' }}>{inv.availableStock}</span>
                   </td>
                   <td className="px-4 py-3 text-right font-mono" style={themeStyles.faint}>{inv.reorderLevel ?? '—'}</td>
                   <td className="px-4 py-3">
